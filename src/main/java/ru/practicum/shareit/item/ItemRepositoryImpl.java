@@ -76,10 +76,10 @@ public class ItemRepositoryImpl implements ItemRepository {
 
     @Override
     public List<Item> getAllItemOneOwner(Long userId) {
-        if (userRepository.findUser(userId) == null) {
+        if (userRepository.findUser(userId).equals(null)) {
             throw new NotFoundException("");
         }
-        return itemData.values().stream().filter(o -> o.getOwner().getId() == userId).collect(Collectors.toList());
+        return itemData.values().stream().filter(o -> o.getOwner().getId().equals(userId)).collect(Collectors.toList());
     }
 
     @Override
