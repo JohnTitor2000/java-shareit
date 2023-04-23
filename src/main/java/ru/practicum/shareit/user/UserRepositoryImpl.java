@@ -62,7 +62,7 @@ public class UserRepositoryImpl implements UserRepository {
     public List<User> getAllUsers() {
         return userData.values().stream().collect(Collectors.toList());
     }
-    
+
     private Long getNextId() {
         return id++;
     }

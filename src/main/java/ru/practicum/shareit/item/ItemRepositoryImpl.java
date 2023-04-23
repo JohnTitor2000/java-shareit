@@ -15,7 +15,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Repository
-public class ItemRepositoryImpl implements ItemRepository{
+public class ItemRepositoryImpl implements ItemRepository {
 
     private Map<Long, Item> itemData = new HashMap<>();
     private Long id = Long.valueOf(1);
