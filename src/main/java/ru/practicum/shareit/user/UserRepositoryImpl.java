@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Repository
-public class UserRepositoryImpl implements UserRepository{
+public class UserRepositoryImpl implements UserRepository {
 
     private Long id = Long.valueOf(1);
     Map<Long, User> userData = new HashMap<>();
@@ -62,8 +62,7 @@ public class UserRepositoryImpl implements UserRepository{
     public List<User> getAllUsers() {
         return userData.values().stream().collect(Collectors.toList());
     }
-
-
+    
     private Long getNextId() {
         return id++;
     }
