@@ -55,10 +55,10 @@ public class ItemRepositoryImpl implements ItemRepository {
     @Override
     public Item updateItem(Long id, Map<String, Object> fields, Long userId) {
         Item item = itemData.get(id);
-        if (item == null) {
+        if (item.equals(null)) {
             throw new NotFoundException("Item not found.");
         }
-        if (!Objects.equals(userId, item.getOwner().getId())) {
+        if (!userId.equals(item.getOwner().getId())) {
             throw new NotFoundException("You can't change owner of item");
         }
         if (fields.containsKey("name")) {
