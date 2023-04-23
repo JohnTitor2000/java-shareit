@@ -5,7 +5,6 @@ import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.exaption.BadRequestException;
 import ru.practicum.shareit.exaption.NotFoundException;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 
 import java.util.Collections;
@@ -13,7 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Repository
