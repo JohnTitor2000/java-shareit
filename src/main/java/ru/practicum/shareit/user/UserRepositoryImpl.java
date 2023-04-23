@@ -40,7 +40,7 @@ public class UserRepositoryImpl implements UserRepository {
         User patchedUser = userData.get(id);
         if (user.getEmail() != null) {
             for (User userRepo : userData.values()) {
-                if (userRepo.getEmail().equals(user.getEmail()) && patchedUser.getId() != userRepo.getId()) {
+                if (userRepo.getEmail().equals(user.getEmail()) && !patchedUser.getId().equals(userRepo.getId())) {
                     throw new ConflictException("This email is already registered.");
                 }
             }
