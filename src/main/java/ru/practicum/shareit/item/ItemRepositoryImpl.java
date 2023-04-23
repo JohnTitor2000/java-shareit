@@ -93,7 +93,7 @@ public class ItemRepositoryImpl implements ItemRepository{
 
     @Override
     public void deleteItem(Long id) {
-
+        itemData.remove(id);
     }
 
     private Long getNextId() {
