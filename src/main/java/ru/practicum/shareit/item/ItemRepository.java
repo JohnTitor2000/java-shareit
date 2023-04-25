@@ -1,9 +1,9 @@
 package ru.practicum.shareit.item;
 
+import ru.practicum.shareit.item.dto.ItemDTO;
 import ru.practicum.shareit.item.model.Item;
 
 import java.util.List;
-import java.util.Map;
 
 public interface ItemRepository {
 
@@ -15,7 +15,7 @@ public interface ItemRepository {
 
     void deleteItem(Long id);
 
-    Item updateItem(Long id, Map<String, Object> fields, Long userId);
+    Item updateItem(Long id, ItemDTO itemDTO, Long userId);
 
     List<Item> getAllItemOneOwner(Long userId);
 

@@ -11,10 +11,10 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import ru.practicum.shareit.item.dto.ItemDTO;
 import ru.practicum.shareit.item.model.Item;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/items")
@@ -27,9 +27,6 @@ public class ItemController {
         this.itemService = itemService;
     }
 
-    // GET запрос для получения списка всех Item
-
-    // GET запрос для получения Item по id
     @GetMapping("/{id}")
     public Item getItemById(@PathVariable Long id) {
         return itemService.getItemById(id);
@@ -40,20 +37,17 @@ public class ItemController {
         return itemService.search(text);
     }
 
-    // POST запрос для создания нового Item
     @PostMapping
     public Item createItem(@RequestBody Item item, @RequestHeader(name = "X-Sharer-User-Id", required = true) Long userId) {
         return itemService.createItem(item, userId);
     }
 
-    // PATCH запрос для обновления существующего Item
     @PatchMapping("/{id}")
-    public Item updateItem(@PathVariable Long id, @RequestBody Map<String, Object> fields,
+    public Item updateItem(@PathVariable Long id, @RequestBody ItemDTO itemDTO,
                            @RequestHeader(name = "X-Sharer-User-Id", required = true) Long userId) {
-        return itemService.updateItem(id, fields, userId);
+        return itemService.updateItem(id, itemDTO, userId);
     }
 
-    // DELETE запрос для удаления Item по id
     @DeleteMapping("/{id}")
     public void deleteItem(@PathVariable Long id) {
         itemService.deleteItem(id);

@@ -2,6 +2,8 @@ package ru.practicum.shareit.user;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.exaption.BadRequestException;
+import ru.practicum.shareit.exaption.ConflictException;
 
 import java.util.List;
 
@@ -20,10 +22,23 @@ public class UserService {
     }
 
     public User createUser(User user) {
+        if (user.getEmail() == null) {
+            throw new BadRequestException("Email is required for registration.");
+        }
+        for (User userRepo : getAll()) {
+            if (userRepo.getEmail().equals(user.getEmail())) {
+                throw new ConflictException("This email is already registered.");
+            }
+        }
         return userRepository.createUser(user);
     }
 
     public User updateUser(Long id, User user) {
+        for (User userRepo : getAll()) {
+            if (userRepo.getEmail().equals(user.getEmail()) && !id.equals(userRepo.getId())) {
+                throw new ConflictException("This email is already registered.");
+            }
+        }
         return userRepository.updateUser(id, user);
     }
 

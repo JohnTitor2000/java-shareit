@@ -34,7 +34,7 @@ public class UserController {
         return  userService.getAll();
     }
 
-    @PostMapping("")
+    @PostMapping
     public User createUser(@Valid @RequestBody User user) {
         return userService.createUser(user);
     }

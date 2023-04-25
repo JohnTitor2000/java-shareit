@@ -2,12 +2,10 @@ package ru.practicum.shareit.item;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import ru.practicum.shareit.exaption.BadRequestException;
-import ru.practicum.shareit.exaption.NotFoundException;
+import ru.practicum.shareit.item.dto.ItemDTO;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.UserRepository;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +15,7 @@ import java.util.stream.Collectors;
 public class ItemRepositoryImpl implements ItemRepository {
 
     private Map<Long, Item> itemData = new HashMap<>();
-    private Long id = Long.valueOf(1);
+    private Long id = 1L;
     private UserRepository userRepository;
 
     @Autowired
@@ -27,15 +25,7 @@ public class ItemRepositoryImpl implements ItemRepository {
 
     @Override
     public Item create(Item item, Long userId) {
-        if (userId != null && userRepository.findUser(userId) == null) {
-            throw new NotFoundException("User not found.");
-        } else {
-            item.setOwner(userRepository.findUser(userId));
-        }
-        if (item.getAvailable() == null || item.getName().isBlank() || item.getName() == null
-                || item.getDescription() == null || item.getDescription().isBlank()) {
-            throw new BadRequestException("The item status must be provided in the request.");
-        }
+        item.setOwner(userRepository.findUser(userId));
         item.setId(getNextId());
         itemData.put(item.getId(), item);
         return  itemData.get(item.getId());
@@ -43,7 +33,7 @@ public class ItemRepositoryImpl implements ItemRepository {
 
     @Override
     public List<Item> getAll() {
-        return null;
+        return itemData.values().stream().collect(Collectors.toList());
     }
 
     @Override
@@ -52,41 +42,27 @@ public class ItemRepositoryImpl implements ItemRepository {
     }
 
     @Override
-    public Item updateItem(Long id, Map<String, Object> fields, Long userId) {
+    public Item updateItem(Long id, ItemDTO itemDTO, Long userId) {
         Item item = itemData.get(id);
-        if (item.equals(null)) {
-            throw new NotFoundException("Item not found.");
+        if (itemDTO.getName() != null) {
+            item.setName(itemDTO.getName());
         }
-        if (!userId.equals(item.getOwner().getId())) {
-            throw new NotFoundException("You can't change owner of item");
+        if (itemDTO.getDescription() != null) {
+            item.setDescription(itemDTO.getDescription());
         }
-        if (fields.containsKey("name")) {
-            item.setName(String.valueOf(fields.get("name")));
+        if (itemDTO.getAvailable() != null) {
+            item.setAvailable(itemDTO.getAvailable());
         }
-        if (fields.containsKey("description")) {
-            item.setDescription(String.valueOf(fields.get("description")));
-        }
-        if (fields.containsKey("available")) {
-            item.setAvailable((Boolean) fields.get("available"));
-        }
-        itemData.put(item.getId(), item);
         return item;
     }
 
     @Override
     public List<Item> getAllItemOneOwner(Long userId) {
-        if (userRepository.findUser(userId).equals(null)) {
-            throw new NotFoundException("");
-        }
         return itemData.values().stream().filter(o -> o.getOwner().getId().equals(userId)).collect(Collectors.toList());
     }
 
     @Override
     public List<Item> search(String text) {
-        if (text.isBlank()) {
-            List<Item> empty = Collections.EMPTY_LIST;
-            return empty;
-        }
         return itemData.values().stream().filter(o -> o.getDescription().toLowerCase().contains(text.toLowerCase()) && o.getAvailable()).collect(Collectors.toList());
     }
 
