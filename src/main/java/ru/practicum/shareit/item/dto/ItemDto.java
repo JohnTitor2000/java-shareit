@@ -12,7 +12,7 @@ import javax.validation.constraints.Positive;
 @Data
 @Builder
 @AllArgsConstructor
-public class ItemDTO {
+public class ItemDto {
     @Positive
     private Long id;
     @Max(50)

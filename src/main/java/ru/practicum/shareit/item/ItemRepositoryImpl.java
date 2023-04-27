@@ -2,7 +2,7 @@ package ru.practicum.shareit.item;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import ru.practicum.shareit.item.dto.ItemDTO;
+import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.UserRepository;
 
@@ -42,7 +42,7 @@ public class ItemRepositoryImpl implements ItemRepository {
     }
 
     @Override
-    public Item updateItem(Long id, ItemDTO itemDTO, Long userId) {
+    public Item updateItem(Long id, ItemDto itemDTO, Long userId) {
         Item item = itemData.get(id);
         if (itemDTO.getName() != null) {
             item.setName(itemDTO.getName());

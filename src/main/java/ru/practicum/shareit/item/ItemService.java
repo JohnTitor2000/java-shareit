@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exaption.BadRequestException;
 import ru.practicum.shareit.exaption.NotFoundException;
-import ru.practicum.shareit.item.dto.ItemDTO;
+import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.UserService;
 
@@ -14,8 +14,8 @@ import java.util.List;
 @Service
 public class ItemService {
 
-    ItemRepository itemRepository;
-    UserService userService;
+    private ItemRepository itemRepository;
+    private UserService userService;
 
     @Autowired
     public ItemService(ItemRepository itemRepository, UserService userService) {
@@ -42,7 +42,7 @@ public class ItemService {
         return itemRepository.create(item, userId);
     }
 
-    public Item updateItem(Long id, ItemDTO itemDTO, Long userId) {
+    public Item updateItem(Long id, ItemDto itemDTO, Long userId) {
         if (getItemById(id).equals(null)) {
             throw new NotFoundException("Item not found.");
         }
