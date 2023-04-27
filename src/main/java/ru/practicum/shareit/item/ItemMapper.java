@@ -1,14 +1,14 @@
 package ru.practicum.shareit.item;
 
-import ru.practicum.shareit.item.dto.ItemDTO;
+import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
 
 public class ItemManager {
-    public static ItemDTO itemToItemDTO(Item item) {
+    public static ItemDto itemToItemDTO(Item item) {
         if (item == null) {
             return null;
         }
-        return ItemDTO.builder()
+        return ItemDto.builder()
                 .id(item.getId())
                 .name(item.getName())
                 .description(item.getDescription())
@@ -17,7 +17,7 @@ public class ItemManager {
                 .build();
     }
 
-    public static Item itemDTOToItem(ItemDTO itemDTO) {
+    public static Item itemDTOToItem(ItemDto itemDTO) {
         if (itemDTO == null) {
             return null;
         }
