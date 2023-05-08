@@ -24,24 +24,20 @@ public class UserService {
 
     public User createUser(User user) {
         if (user.getEmail() == null) {
-            throw new BadRequestException("Email is required for registration.");
-        }
-        for (User userRepo : getAll()) {
-            if (userRepo.getEmail().equals(user.getEmail())) {
-                throw new ConflictException("This email is already registered.");
-            }
+            throw new BadRequestException("email");
         }
         return userRepository.save(user);
     }
 
     public User updateUser(User user, Long id) {
-        user.setId(id);
-        for (User userRepo : getAll()) {
-            if (userRepo.getEmail().equals(user.getEmail()) && !user.getId().equals(userRepo.getId())) {
-                throw new ConflictException("This email is already registered.");
-            }
+        User userUpdate = userRepository.findById(id).orElseThrow(() -> new NotFoundException("User not Found."));
+        if (user.getEmail() != null) {
+            userUpdate.setEmail(user.getEmail());
         }
-        return userRepository.save(user);
+        if (user.getName() != null) {
+            userUpdate.setName(user.getName());
+        }
+        return userRepository.save(userUpdate);
     }
 
     public void deleteUser(Long id) {
