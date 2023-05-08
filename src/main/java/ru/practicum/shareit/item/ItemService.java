@@ -16,11 +16,13 @@ public class ItemService {
 
     private ItemRepository itemRepository;
     private UserService userService;
+    private ItemMapper itemMapper;
 
     @Autowired
-    public ItemService(ItemRepository itemRepository, UserService userService) {
+    public ItemService(ItemRepository itemRepository, UserService userService, ItemMapper itemMapper) {
         this.itemRepository = itemRepository;
         this.userService = userService;
+        this.itemMapper = itemMapper;
     }
 
     public List<Item> getAllItems() {
@@ -28,7 +30,7 @@ public class ItemService {
     }
 
     public Item getItemById(Long id) {
-        return itemRepository.getItemById(id);
+        return itemRepository.findById(id).orElseThrow(() -> new NotFoundException("Item not found."));
     }
 
     public Item createItem(Item item, Long userId) {
@@ -39,7 +41,7 @@ public class ItemService {
                 || item.getDescription() == null || item.getDescription().isBlank()) {
             throw new BadRequestException("The item status must be provided in the request.");
         }
-        return itemRepository.create(item, userId);
+        return itemRepository.save(item);
     }
 
     public Item updateItem(Long id, ItemDto itemDTO, Long userId) {
@@ -49,7 +51,7 @@ public class ItemService {
         if (!userId.equals(getItemById(id).getOwner().getId())) {
             throw new NotFoundException("You can't change owner of item");
         }
-        return  itemRepository.updateItem(id, itemDTO, userId);
+        return  itemRepository.save(itemMapper.itemDTOToItem(itemDTO));
     }
 
     public void deleteItem(Long id) {
@@ -59,7 +61,7 @@ public class ItemService {
         if (userService.getUserById(userId).equals(null)) {
             throw new NotFoundException("User not found");
         }
-        return itemRepository.getAllItemOneOwner(userId);
+        return itemRepository.findByOwnerId(userId);
     }
 
     public List<Item> search(String text) {
@@ -67,6 +69,6 @@ public class ItemService {
             List<Item> empty = Collections.EMPTY_LIST;
             return empty;
         }
-        return itemRepository.search(text);
+        return itemRepository.findByDescriptionContaining(text);
     }
 }

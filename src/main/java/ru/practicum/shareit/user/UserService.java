@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exaption.BadRequestException;
 import ru.practicum.shareit.exaption.ConflictException;
+import ru.practicum.shareit.exaption.NotFoundException;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class UserService {
     }
 
     public User getUserById(Long id) {
-        return userRepository.findUser(id);
+        return userRepository.findById(id).orElseThrow(() -> new NotFoundException("User not found."));
     }
 
     public User createUser(User user) {
@@ -30,23 +31,24 @@ public class UserService {
                 throw new ConflictException("This email is already registered.");
             }
         }
-        return userRepository.createUser(user);
+        return userRepository.save(user);
     }
 
-    public User updateUser(Long id, User user) {
+    public User updateUser(User user, Long id) {
+        user.setId(id);
         for (User userRepo : getAll()) {
-            if (userRepo.getEmail().equals(user.getEmail()) && !id.equals(userRepo.getId())) {
+            if (userRepo.getEmail().equals(user.getEmail()) && !user.getId().equals(userRepo.getId())) {
                 throw new ConflictException("This email is already registered.");
             }
         }
-        return userRepository.updateUser(id, user);
+        return userRepository.save(user);
     }
 
     public void deleteUser(Long id) {
-        userRepository.deleteUser(id);
+        userRepository.deleteById(id);
     }
 
     public List<User> getAll() {
-        return userRepository.getAllUsers();
+        return userRepository.findAll();
     }
 }

@@ -41,7 +41,7 @@ public class UserController {
 
     @PatchMapping("/{id}")
     public User updateUser(@PathVariable("id") @Positive Long id, @Valid @RequestBody User user) {
-        return userService.updateUser(id, user);
+        return userService.updateUser(user, id);
     }
 
     @DeleteMapping("/{id}")

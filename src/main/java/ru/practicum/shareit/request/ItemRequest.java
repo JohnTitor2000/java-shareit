@@ -11,6 +11,6 @@ public class ItemRequest {
     @Positive
     private Long id;
     private String description;
-    private User requestor;
+    private User requester;
     private LocalDateTime created;
 }
