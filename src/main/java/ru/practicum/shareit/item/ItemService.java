@@ -34,24 +34,33 @@ public class ItemService {
     }
 
     public Item createItem(Item item, Long userId) {
-        if (userId != null && userService.getUserById(userId) == null) {
-            throw new NotFoundException("User not found.");
-        }
         if (item.getAvailable() == null || item.getName().isBlank() || item.getName() == null
                 || item.getDescription() == null || item.getDescription().isBlank()) {
             throw new BadRequestException("The item status must be provided in the request.");
         }
+        if (userId != null && userService.getUserById(userId) == null) {
+            throw new NotFoundException("User not found.");
+        }
+        item.setOwner(userService.getUserById(userId));
         return itemRepository.save(item);
     }
 
     public Item updateItem(Long id, ItemDto itemDTO, Long userId) {
-        if (getItemById(id).equals(null)) {
-            throw new NotFoundException("Item not found.");
-        }
+        getItemById(id);
         if (!userId.equals(getItemById(id).getOwner().getId())) {
             throw new NotFoundException("You can't change owner of item");
         }
-        return  itemRepository.save(itemMapper.itemDTOToItem(itemDTO));
+        Item item = itemRepository.findById(id).orElseThrow(() -> new NotFoundException("Item not found."));
+        if (itemDTO.getName() != null) {
+            item.setName(itemDTO.getName());
+        }
+        if (itemDTO.getDescription() != null) {
+            item.setDescription(itemDTO.getDescription());
+        }
+        if (itemDTO.getAvailable() != null) {
+            item.setAvailable(itemDTO.getAvailable());
+        }
+        return  itemRepository.save(item);
     }
 
     public void deleteItem(Long id) {
@@ -69,6 +78,6 @@ public class ItemService {
             List<Item> empty = Collections.EMPTY_LIST;
             return empty;
         }
-        return itemRepository.findByDescriptionContaining(text);
+        return itemRepository.findByDescriptionContainingIgnoreCaseAndAvailableTrue(text);
     }
 }
