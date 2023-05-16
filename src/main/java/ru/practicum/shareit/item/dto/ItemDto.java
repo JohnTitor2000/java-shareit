@@ -22,4 +22,4 @@ public class ItemDto {
     private Boolean available;
     private ItemRequest request;
     private User owner;
-    }
+}
