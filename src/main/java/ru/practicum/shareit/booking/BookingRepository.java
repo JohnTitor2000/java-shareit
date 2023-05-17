@@ -6,6 +6,8 @@ import java.util.List;
 
 interface BookingRepository extends JpaRepository<Booking, Long> {
 
-    List<Booking> findByBookerIdOrderByEndTime(Long bookerId);
+    List<Booking> findByBooker_IdOrderByStartDesc(Long bookerId);
+
+    List<Booking> findAllByItemOwner_IdOrderByStart(Long ownerId);
 
 }

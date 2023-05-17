@@ -1,14 +1,19 @@
 package ru.practicum.shareit.booking;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.exaption.BadRequestException;
 import ru.practicum.shareit.exaption.NotFoundException;
+import ru.practicum.shareit.exaption.UnsupportedStatusException;
 import ru.practicum.shareit.user.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class BookingService {
@@ -47,6 +52,9 @@ public class BookingService {
     }
 
     public Booking editBookingStatus(Long bookingId, boolean approve, Long ownerId) {
+        if (!userRepository.existsById(ownerId)) {
+            throw new NotFoundException("User not found.");
+        }
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> new NotFoundException("Booking not found."));
         if (!ownerId.equals(booking.getItem().getOwner().getId())) {
             throw new BadRequestException("You cant edit this booking.");
@@ -60,14 +68,59 @@ public class BookingService {
     }
 
     public Booking getBooking(Long bookingId, Long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new NotFoundException("User not found.");
+        }
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> new NotFoundException("Booking not found."));
-        if (!userId.equals(booking.getBooker().getId()) && userId.equals(booking.getItem().getOwner().getId())) {
+        if (!(userId.equals(booking.getBooker().getId()) | userId.equals(booking.getItem().getOwner().getId()))) {
             throw new BadRequestException("You cant get this information.");
         }
         return booking;
     }
 
     public List<Booking> getBookingsByUserId(String state, Long userId) {
-        List<Booking> bookings
+        if (!userRepository.existsById(userId)) {
+            throw new NotFoundException("User not found.");
+        }
+        List<Booking> bookings = bookingRepository.findByBooker_IdOrderByStartDesc(userId);
+        switch (state) {
+            case "ALL":
+                return bookings;
+            case "CURRENT":
+                return bookings.stream().filter((o) -> o.getStart().isAfter(LocalDateTime.now()) && o.getEnd().isBefore(LocalDateTime.now())).collect(Collectors.toList());
+            case "PAST":
+                return bookings.stream().filter((o) -> o.getEnd().isBefore(LocalDateTime.now())).collect(Collectors.toList());
+            case "FUTURE":
+                return  bookings.stream().filter(o -> o.getStart().isAfter(LocalDateTime.now())).collect(Collectors.toList());
+            case "WAITING":
+                return bookings.stream().filter(o -> o.getStatus().equals(BookingStatus.WAITING)).collect(Collectors.toList());
+            case "REJECTED":
+                return bookings.stream().filter(o -> o.getStatus().equals(BookingStatus.REJECTED)).collect(Collectors.toList());
+            default:
+                throw new UnsupportedStatusException(state);
+        }
+    }
+
+    public List<Booking> getBookingsByOwnerId(String state, Long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new NotFoundException("User not found.");
+        }
+        List<Booking> bookings = bookingRepository.findAllByItemOwner_IdOrderByStart(userId);
+        switch (state) {
+            case "ALL":
+                return bookings;
+            case "CURRENT":
+                return bookings.stream().filter((o) -> o.getStart().isAfter(LocalDateTime.now()) && o.getEnd().isBefore(LocalDateTime.now())).collect(Collectors.toList());
+            case "PAST":
+                return bookings.stream().filter((o) -> o.getEnd().isBefore(LocalDateTime.now())).collect(Collectors.toList());
+            case "FUTURE":
+                return  bookings.stream().filter(o -> o.getStart().isAfter(LocalDateTime.now())).collect(Collectors.toList());
+            case "WAITING":
+                return bookings.stream().filter(o -> o.getStatus().equals(BookingStatus.WAITING)).collect(Collectors.toList());
+            case "REJECTED":
+                return bookings.stream().filter(o -> o.getStatus().equals(BookingStatus.REJECTED)).collect(Collectors.toList());
+            default:
+                throw new UnsupportedStatusException(state);
+        }
     }
 }
