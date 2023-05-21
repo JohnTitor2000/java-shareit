@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 
 import java.util.List;
@@ -27,9 +29,14 @@ public class ItemController {
         this.itemService = itemService;
     }
 
+    @PostMapping("/{itemId}/comment")
+    public CommentDto addComments(@PathVariable Long itemId, @RequestHeader(name = "X-Sharer-User-Id", required = true) Long userId, @RequestBody CommentDto commentDto) {
+        return itemService.addComment(itemId, userId, commentDto);
+    }
+
     @GetMapping("/{id}")
-    public Item getItemById(@PathVariable Long id) {
-        return itemService.getItemById(id);
+    public ItemDto getItemById(@PathVariable Long id, @RequestHeader(name = "X-Sharer-User-Id", required = true) Long userId) {
+        return itemService.getItemById(id, userId);
     }
 
     @GetMapping("/search")
@@ -54,7 +61,7 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<Item> getItemsByUser(@RequestHeader(name = "X-Sharer-User-Id", required = true) Long userId) {
+    public List<ItemDto> getItemsByUser(@RequestHeader(name = "X-Sharer-User-Id", required = true) Long userId) {
         return  itemService.getItemsByUser(userId);
     }
 }

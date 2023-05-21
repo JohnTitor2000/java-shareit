@@ -1,14 +1,12 @@
 package ru.practicum.shareit.booking;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.exaption.BadRequestException;
 import ru.practicum.shareit.exaption.NotFoundException;
 import ru.practicum.shareit.exaption.UnsupportedStatusException;
+import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.user.UserRepository;
 
 import java.time.LocalDateTime;
@@ -21,12 +19,14 @@ public class BookingService {
     BookingRepository bookingRepository;
     UserRepository userRepository;
     BookingMapper bookingMapper;
+    ItemRepository itemRepository;
 
     @Autowired
-    public BookingService(UserRepository userRepository,BookingRepository bookingRepository, BookingMapper bookingMapper) {
+    public BookingService(UserRepository userRepository,BookingRepository bookingRepository, BookingMapper bookingMapper, ItemRepository itemRepository) {
         this.userRepository = userRepository;
         this.bookingRepository = bookingRepository;
         this.bookingMapper = bookingMapper;
+        this.itemRepository = itemRepository;
     }
 
     public Booking createBooking(BookingDto bookingDto, Long sharerId) {
@@ -42,6 +42,8 @@ public class BookingService {
             throw new BadRequestException("End time cant be null");
         } else if (bookingDto.getStart().isBefore(LocalDateTime.now())) {
             throw new BadRequestException("Start time cant be in present");
+        } else if (sharerId.equals(itemRepository.findById(bookingDto.getItemId()).orElseThrow(() -> new NotFoundException("User not found.")).getOwner().getId())) {
+            throw new NotFoundException("You cant booking this item.");
         }
         Booking booking = bookingMapper.bookingDtoToBooking(bookingDto, sharerId);
         booking.setStatus(BookingStatus.WAITING);
@@ -56,8 +58,11 @@ public class BookingService {
             throw new NotFoundException("User not found.");
         }
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> new NotFoundException("Booking not found."));
+        if (booking.getStatus().equals(BookingStatus.APPROVED)) {
+            throw new BadRequestException("Booking already approved");
+        }
         if (!ownerId.equals(booking.getItem().getOwner().getId())) {
-            throw new BadRequestException("You cant edit this booking.");
+            throw new NotFoundException("You cant edit this booking.");
         }
         if (approve) {
             booking.setStatus(BookingStatus.APPROVED);
@@ -68,12 +73,10 @@ public class BookingService {
     }
 
     public Booking getBooking(Long bookingId, Long userId) {
-        if (!userRepository.existsById(userId)) {
-            throw new NotFoundException("User not found.");
-        }
+        userRepository.findById(userId).orElseThrow(() -> new NotFoundException("user not found"));
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> new NotFoundException("Booking not found."));
         if (!(userId.equals(booking.getBooker().getId()) | userId.equals(booking.getItem().getOwner().getId()))) {
-            throw new BadRequestException("You cant get this information.");
+            throw new NotFoundException("You cant get this information.");
         }
         return booking;
     }
@@ -87,7 +90,7 @@ public class BookingService {
             case "ALL":
                 return bookings;
             case "CURRENT":
-                return bookings.stream().filter((o) -> o.getStart().isAfter(LocalDateTime.now()) && o.getEnd().isBefore(LocalDateTime.now())).collect(Collectors.toList());
+                return bookings.stream().filter((o) -> o.getStart().isBefore(LocalDateTime.now()) && o.getEnd().isAfter(LocalDateTime.now())).collect(Collectors.toList());
             case "PAST":
                 return bookings.stream().filter((o) -> o.getEnd().isBefore(LocalDateTime.now())).collect(Collectors.toList());
             case "FUTURE":
@@ -105,12 +108,12 @@ public class BookingService {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException("User not found.");
         }
-        List<Booking> bookings = bookingRepository.findAllByItemOwner_IdOrderByStart(userId);
+        List<Booking> bookings = bookingRepository.findBookingsByItemOwnerId(userId);
         switch (state) {
             case "ALL":
                 return bookings;
             case "CURRENT":
-                return bookings.stream().filter((o) -> o.getStart().isAfter(LocalDateTime.now()) && o.getEnd().isBefore(LocalDateTime.now())).collect(Collectors.toList());
+                return bookings.stream().filter((o) -> o.getStart().isBefore(LocalDateTime.now()) && o.getEnd().isAfter(LocalDateTime.now())).collect(Collectors.toList());
             case "PAST":
                 return bookings.stream().filter((o) -> o.getEnd().isBefore(LocalDateTime.now())).collect(Collectors.toList());
             case "FUTURE":
