@@ -75,7 +75,7 @@ public class BookingService {
     public Booking getBooking(Long bookingId, Long userId) {
         userRepository.findById(userId).orElseThrow(() -> new NotFoundException("user not found"));
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> new NotFoundException("Booking not found."));
-        if (!(userId.equals(booking.getBooker().getId()) | userId.equals(booking.getItem().getOwner().getId()))) {
+        if (!(userId.equals(booking.getBooker().getId()) || userId.equals(booking.getItem().getOwner().getId()))) {
             throw new NotFoundException("You cant get this information.");
         }
         return booking;
