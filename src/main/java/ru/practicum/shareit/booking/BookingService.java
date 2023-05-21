@@ -43,7 +43,7 @@ public class BookingService {
         } else if (bookingDto.getStart().isBefore(LocalDateTime.now())) {
             throw new BadRequestException("Start time cant be in present");
         } else if (sharerId.equals(itemRepository.findById(bookingDto.getItemId()).orElseThrow(() -> new NotFoundException("User not found.")).getOwner().getId())) {
-            throw new NotFoundException("You cant booking this item.");
+            throw new BadRequestException("You cant booking this item.");
         }
         Booking booking = bookingMapper.bookingDtoToBooking(bookingDto, sharerId);
         booking.setStatus(BookingStatus.WAITING);
