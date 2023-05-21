@@ -30,16 +30,16 @@ public class BookingService {
     }
 
     public Booking createBooking(BookingDto bookingDto, Long sharerId) {
-        if (bookingDto.getEnd().isBefore(LocalDateTime.now())) {
+        if (bookingDto.getStart() == null) {
+            throw new BadRequestException("Start time cant be null");
+        } else if (bookingDto.getEnd() == null) {
+            throw new BadRequestException("End time cant be null");
+        } else if (bookingDto.getEnd().isBefore(LocalDateTime.now())) {
             throw new BadRequestException("End time cant be in present.");
         } else if (bookingDto.getEnd().isBefore(bookingDto.getStart())) {
             throw new BadRequestException("End time cant be before start time.");
         } else if (bookingDto.getEnd().equals(bookingDto.getStart())) {
             throw new BadRequestException("End time and Start time cant be in same time.");
-        } else if (bookingDto.getStart() == null) {
-            throw new BadRequestException("Start time cant be null");
-        } else if (bookingDto.getEnd() == null) {
-            throw new BadRequestException("End time cant be null");
         } else if (bookingDto.getStart().isBefore(LocalDateTime.now())) {
             throw new BadRequestException("Start time cant be in present");
         } else if (sharerId.equals(itemRepository.findById(bookingDto.getItemId()).orElseThrow(() -> new NotFoundException("User not found.")).getOwner().getId())) {
