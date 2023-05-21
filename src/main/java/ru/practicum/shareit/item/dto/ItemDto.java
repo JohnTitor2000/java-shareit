@@ -10,7 +10,6 @@ import ru.practicum.shareit.user.User;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Positive;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data

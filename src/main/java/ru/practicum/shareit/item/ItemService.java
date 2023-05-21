@@ -27,7 +27,6 @@ public class ItemService {
     private UserService userService;
     private ItemMapper itemMapper;
     private CommentRepository commentRepository;
-
     private CommentMapper commentMapper;
 
     @Autowired
@@ -39,8 +38,6 @@ public class ItemService {
         this.itemMapper = itemMapper;
         this.commentMapper = commentMapper;
     }
-
-
 
     public List<Item> getAllItems() {
         return null;
@@ -67,6 +64,7 @@ public class ItemService {
             return itemMapper.itemToItemDTO(item, null, null);
         }
     }
+
     public List<ItemDto> getItemsByUser(Long userId) {
         if (userService.getUserById(userId).equals(null)) {
             throw new NotFoundException("User not found");
