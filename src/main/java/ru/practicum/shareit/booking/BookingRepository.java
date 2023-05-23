@@ -2,17 +2,15 @@ package ru.practicum.shareit.booking;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface BookingRepository extends JpaRepository<Booking, Long> {
+public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpecificationExecutor<Booking> {
 
-    List<Booking> findByBooker_IdOrderByStartDesc(Long bookerId);
-
-    @Query("SELECT b FROM Booking b LEFT JOIN FETCH b.item i WHERE i.owner.id = ?1 ORDER BY b.start DESC")
-    List<Booking> findBookingsByItemOwnerId(Long ownerId);
+    List<Booking> findByBookerIdOrderByStartDesc(Long bookerId);
 
     @Query("select booking "
             + " from Booking booking "

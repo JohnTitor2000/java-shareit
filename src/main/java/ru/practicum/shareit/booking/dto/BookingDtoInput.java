@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-public class BookingDto {
+public class BookingDtoInput {
     Long itemId;
     LocalDateTime start;
     LocalDateTime end;

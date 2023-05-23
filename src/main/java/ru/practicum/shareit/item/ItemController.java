@@ -12,7 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.item.dto.CommentDto;
-import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemDtoDefault;
+import ru.practicum.shareit.item.dto.ItemDtoWithBookings;
 import ru.practicum.shareit.item.model.Item;
 
 import java.util.List;
@@ -34,24 +35,24 @@ public class ItemController {
     }
 
     @GetMapping("/{id}")
-    public ItemDto getItemById(@PathVariable Long id, @RequestHeader(name = "X-Sharer-User-Id", required = true) Long userId) {
+    public ItemDtoWithBookings getItemById(@PathVariable Long id, @RequestHeader(name = "X-Sharer-User-Id", required = true) Long userId) {
         return itemService.getItemById(id, userId);
     }
 
     @GetMapping("/search")
-    public List<Item> search(@RequestParam(value = "text", defaultValue = "") String text) {
+    public List<ItemDtoDefault> search(@RequestParam(value = "text", defaultValue = "") String text) {
         return itemService.search(text);
     }
 
     @PostMapping
-    public Item createItem(@RequestBody Item item, @RequestHeader(name = "X-Sharer-User-Id", required = true) Long userId) {
+    public ItemDtoDefault createItem(@RequestBody Item item, @RequestHeader(name = "X-Sharer-User-Id", required = true) Long userId) {
         return itemService.createItem(item, userId);
     }
 
     @PatchMapping("/{id}")
-    public Item updateItem(@PathVariable Long id, @RequestBody ItemDto itemDTO,
+    public ItemDtoDefault updateItem(@PathVariable Long id, @RequestBody ItemDtoWithBookings itemDTOWithBookings,
                            @RequestHeader(name = "X-Sharer-User-Id", required = true) Long userId) {
-        return itemService.updateItem(id, itemDTO, userId);
+        return itemService.updateItem(id, itemDTOWithBookings, userId);
     }
 
     @DeleteMapping("/{id}")
@@ -60,7 +61,7 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemDto> getItemsByUser(@RequestHeader(name = "X-Sharer-User-Id", required = true) Long userId) {
+    public List<ItemDtoWithBookings> getItemsByUser(@RequestHeader(name = "X-Sharer-User-Id", required = true) Long userId) {
         return  itemService.getItemsByUser(userId);
     }
 }

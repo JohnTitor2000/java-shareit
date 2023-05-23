@@ -1,10 +1,11 @@
 package ru.practicum.shareit.item;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.practicum.shareit.booking.dto.BookingIdAndBookerId;
 import ru.practicum.shareit.item.dto.CommentDto;
-import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemDtoDefault;
+import ru.practicum.shareit.item.dto.ItemDtoWithBookings;
+import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 
 import java.util.List;
@@ -13,41 +14,44 @@ import java.util.stream.Collectors;
 @Component
 public class ItemMapper {
 
-    CommentRepository commentRepository;
-
-    @Autowired
-    public ItemMapper(CommentRepository commentRepository) {
-        this.commentRepository = commentRepository;
-    }
-
-    public ItemDto itemToItemDTO(Item item, BookingIdAndBookerId last, BookingIdAndBookerId next) {
+    public ItemDtoWithBookings itemToItemDtoWithBookings(Item item, BookingIdAndBookerId last, BookingIdAndBookerId next, List<Comment> comment) {
         if (item == null) {
             return null;
         }
-        List<CommentDto> comments = commentRepository.findByItemId(item.getId()).stream().map(CommentMapper::commentToCommentDto).collect(Collectors.toList());
-        ItemDto itemDto = ItemDto.builder()
+        List<CommentDto> comments = comment.stream().map(CommentMapper::commentToCommentDto).collect(Collectors.toList());
+        ItemDtoWithBookings itemDtoWithBookings = ItemDtoWithBookings.builder()
                 .id(item.getId())
                 .name(item.getName())
                 .description(item.getDescription())
                 .available(item.getAvailable())
                 .owner(item.getOwner())
                 .build();
-        itemDto.setComments(comments);
-        itemDto.setLastBooking(last);
-        itemDto.setNextBooking(next);
-        return itemDto;
+        itemDtoWithBookings.setComments(comments);
+        itemDtoWithBookings.setLastBooking(last);
+        itemDtoWithBookings.setNextBooking(next);
+        return itemDtoWithBookings;
     }
 
-    public Item itemDTOToItem(ItemDto itemDTO) {
-        if (itemDTO == null) {
+    public Item itemDTOToItem(ItemDtoWithBookings itemDTOWithBookings) {
+        if (itemDTOWithBookings == null) {
             return null;
         }
         Item item = new Item();
-        item.setId(itemDTO.getId());
-        item.setName(itemDTO.getName());
-        item.setDescription(itemDTO.getDescription());
-        item.setAvailable(itemDTO.getAvailable());
-        item.setOwner(itemDTO.getOwner());
+        item.setId(itemDTOWithBookings.getId());
+        item.setName(itemDTOWithBookings.getName());
+        item.setDescription(itemDTOWithBookings.getDescription());
+        item.setAvailable(itemDTOWithBookings.getAvailable());
+        item.setOwner(itemDTOWithBookings.getOwner());
         return item;
+    }
+
+    public ItemDtoDefault itemToItemDtoDefault(Item item) {
+        ItemDtoDefault itemDtoDefault = new ItemDtoDefault();
+        itemDtoDefault.setId(item.getId());
+        itemDtoDefault.setName(item.getName());
+        itemDtoDefault.setDescription(item.getDescription());
+        itemDtoDefault.setOwner(item.getOwner());
+        itemDtoDefault.setAvailable(item.getAvailable());
+        return itemDtoDefault;
     }
 }

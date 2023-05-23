@@ -12,6 +12,6 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     List<Item> findByOwnerIdOrderById(Long ownerId);
 
     @Query("SELECT i FROM Item i WHERE LOWER(i.description) LIKE LOWER(concat('%', :description, '%')) AND i.available = true")
-    List<Item> findByDescriptionContainingIgnoreCaseAndAvailableTrue(@Param("description") String description);
+    List<Item> findByDescription(@Param("description") String description);
 
 }

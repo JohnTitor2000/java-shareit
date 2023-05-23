@@ -5,6 +5,8 @@ import org.springframework.stereotype.Component;
 import ru.practicum.shareit.exaption.NotFoundException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.model.Comment;
+import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 
 import java.time.LocalDateTime;
@@ -12,21 +14,12 @@ import java.time.LocalDateTime;
 @Component
 public class CommentMapper {
 
-    UserRepository userRepository;
-    ItemRepository itemRepository;
-
-    @Autowired
-    public CommentMapper(UserRepository userRepository, ItemRepository itemRepository) {
-        this.userRepository = userRepository;
-        this.itemRepository = itemRepository;
-    }
-
-    public Comment commentDtoToComment(CommentDto commentDto, Long userId, Long itemId) {
+    public Comment commentDtoToComment(CommentDto commentDto, Long userId, Long itemId, User author, Item item) {
         Comment comment = new Comment();
         comment.setText(commentDto.getText());
         comment.setCreated(LocalDateTime.now());
-        comment.setAuthor(userRepository.findById(userId).orElseThrow(() -> new NotFoundException("user not found!")));
-        comment.setItem(itemRepository.findById(itemId).orElseThrow(() -> new NotFoundException("item not found!")));
+        comment.setAuthor(author);
+        comment.setItem(item);
         return comment;
     }
 

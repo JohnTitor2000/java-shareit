@@ -16,7 +16,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ItemDto {
+public class ItemDtoWithBookings {
     @Positive
     private Long id;
     @Max(50)
