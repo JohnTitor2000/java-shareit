@@ -1,8 +1,10 @@
 package ru.practicum.shareit.item;
 
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.BookingStatus;
 import ru.practicum.shareit.booking.dto.BookingIdAndBookerId;
@@ -13,6 +15,7 @@ import ru.practicum.shareit.item.dto.ItemDtoDefault;
 import ru.practicum.shareit.item.dto.ItemDtoWithBookings;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 import ru.practicum.shareit.user.UserService;
 
@@ -23,6 +26,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@AllArgsConstructor(onConstructor = @__(@Autowired))
 public class ItemService {
 
     private BookingRepository bookingRepository;
@@ -32,17 +36,6 @@ public class ItemService {
     private CommentRepository commentRepository;
     private CommentMapper commentMapper;
     private UserRepository userRepository;
-
-    @Autowired
-    public ItemService(ItemRepository itemRepository, UserService userService, ItemMapper itemMapper, BookingRepository bookingRepository, CommentRepository commentRepository, CommentMapper commentMapper, UserRepository userRepository) {
-        this.commentRepository = commentRepository;
-        this.bookingRepository = bookingRepository;
-        this.itemRepository = itemRepository;
-        this.userService = userService;
-        this.itemMapper = itemMapper;
-        this.commentMapper = commentMapper;
-        this.userRepository = userRepository;
-    }
 
     public List<ItemDtoDefault> getAllItems() {
         return itemRepository.findAll().stream().map(itemMapper::itemToItemDtoDefault).collect(Collectors.toList());
@@ -62,26 +55,31 @@ public class ItemService {
     }
 
     public ItemDtoWithBookings getItemById(Long id, Long userId) {
-        Item item = itemRepository.findById(id).orElseThrow(() -> new NotFoundException("Item not found."));
+        Item item = itemRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Item not found."));
+        BookingIdAndBookerId next = null;
+        BookingIdAndBookerId last = null;
         if (item.getOwner().getId().equals(userId)) {
-            BookingIdAndBookerId next = bookingRepository.findBookingsNext(id, item.getOwner().getId(),PageRequest.of(0, 1)).stream().findFirst().isPresent() ? new BookingIdAndBookerId(bookingRepository.findBookingsNext(id, item.getOwner().getId(), PageRequest.of(0, 1)).stream().findFirst().get().getId(), bookingRepository.findBookingsNext(id, item.getOwner().getId(), PageRequest.of(0, 1)).stream().findFirst().get().getBooker().getId()) : null;
-            BookingIdAndBookerId last = bookingRepository.findBookingsLast(id, item.getOwner().getId(), PageRequest.of(0, 1)).stream().findFirst().isPresent() ? new BookingIdAndBookerId(bookingRepository.findBookingsLast(id, item.getOwner().getId(), PageRequest.of(0, 1)).stream().findFirst().get().getId(),bookingRepository.findBookingsLast(id, item.getOwner().getId(), PageRequest.of(0, 1)).stream().findFirst().get().getBooker().getId()) : null;
-            return itemMapper.itemToItemDtoWithBookings(item, last, next, commentRepository.findByItemId(item.getId()));
-        } else {
-            return itemMapper.itemToItemDtoWithBookings(item, null, null, commentRepository.findByItemId(item.getId()));
+            next = getBookingIdAndBookerId(bookingRepository.findBookingsNext(id, userId, PageRequest.of(0, 1)));
+            last = getBookingIdAndBookerId(bookingRepository.findBookingsLast(id, userId, PageRequest.of(0, 1)));
         }
+        List<Comment> comments = commentRepository.findByItemId(item.getId());
+        return itemMapper.itemToItemDtoWithBookings(item, last, next, comments);
     }
 
     public List<ItemDtoWithBookings> getItemsByUser(Long userId) {
-        if (userService.getUserById(userId).equals(null)) {
-            throw new NotFoundException("User not found");
+        User user = userService.getUserById(userId);
+        if (user == null) {
+            throw new NotFoundException("User not found.");
         }
+
         List<Item> items = itemRepository.findByOwnerIdOrderById(userId);
         List<ItemDtoWithBookings> itemsWithDates = new ArrayList<>();
-        for (Item item: items) {
-            BookingIdAndBookerId next = bookingRepository.findBookingsNext(item.getId(), item.getOwner().getId(), PageRequest.of(0, 1)).stream().findFirst().isPresent() ? new BookingIdAndBookerId(bookingRepository.findBookingsNext(item.getId(), item.getOwner().getId(),PageRequest.of(0, 1)).stream().findFirst().get().getId(), bookingRepository.findBookingsNext(item.getId(), item.getOwner().getId(), PageRequest.of(0, 1)).stream().findFirst().get().getBooker().getId()) : null;
-            BookingIdAndBookerId last = bookingRepository.findBookingsLast(item.getId(), item.getOwner().getId(), PageRequest.of(0, 1)).stream().findFirst().isPresent() ? new BookingIdAndBookerId(bookingRepository.findBookingsLast(item.getId(), item.getOwner().getId(),PageRequest.of(0, 1)).stream().findFirst().get().getId(),bookingRepository.findBookingsLast(item.getId(), item.getOwner().getId(), PageRequest.of(0, 1)).stream().findFirst().get().getBooker().getId()) : null;
-            itemsWithDates.add(itemMapper.itemToItemDtoWithBookings(item, last, next, commentRepository.findByItemId(item.getId())));
+        for (Item item : items) {
+            BookingIdAndBookerId next = getBookingIdAndBookerId(bookingRepository.findBookingsNext(item.getId(), item.getOwner().getId(), PageRequest.of(0, 1)));
+            BookingIdAndBookerId last = getBookingIdAndBookerId(bookingRepository.findBookingsLast(item.getId(), item.getOwner().getId(), PageRequest.of(0, 1)));
+            List<Comment> comments = commentRepository.findByItemId(item.getId());
+            itemsWithDates.add(itemMapper.itemToItemDtoWithBookings(item, last, next, comments));
         }
         return itemsWithDates;
     }
@@ -126,5 +124,13 @@ public class ItemService {
             return empty;
         }
         return itemRepository.findByDescription(text).stream().map(itemMapper::itemToItemDtoDefault).collect(Collectors.toList());
+    }
+
+    private BookingIdAndBookerId getBookingIdAndBookerId(List<Booking> bookings) {
+        if (bookings.isEmpty()) {
+            return null;
+        }
+        Booking booking = bookings.get(0);
+        return new BookingIdAndBookerId(booking.getId(), booking.getBooker().getId());
     }
 }

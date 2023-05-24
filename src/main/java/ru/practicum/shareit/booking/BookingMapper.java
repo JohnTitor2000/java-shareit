@@ -8,7 +8,6 @@ import ru.practicum.shareit.user.User;
 
 @Component
 public class BookingMapper {
-
     public Booking bookingDtoOutputToBooking(BookingDtoInput bookingDtoInput, Item item, User booker) {
         Booking booking = new Booking();
         booking.setEnd(bookingDtoInput.getEnd());

@@ -9,6 +9,6 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @AllArgsConstructor
 public class BookingIdAndBookerId {
-    Long id;
-    Long bookerId;
+    private Long id;
+    private Long bookerId;
 }

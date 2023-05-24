@@ -1,10 +1,12 @@
 package ru.practicum.shareit.booking;
 
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.dto.BookingDtoInput;
 import ru.practicum.shareit.booking.dto.BookingDtoOutput;
+import ru.practicum.shareit.booking.specifications.BookingSpecifications;
 import ru.practicum.shareit.exaption.BadRequestException;
 import ru.practicum.shareit.exaption.NotFoundException;
 import ru.practicum.shareit.exaption.UnsupportedStatusException;
@@ -15,23 +17,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static ru.practicum.shareit.booking.specifications.BookingSpecifications.*;
-
 @Service
+@AllArgsConstructor(onConstructor = @__(@Autowired))
 public class BookingService {
 
     private BookingRepository bookingRepository;
     private UserRepository userRepository;
     private BookingMapper bookingMapper;
     private ItemRepository itemRepository;
-
-    @Autowired
-    public BookingService(UserRepository userRepository,BookingRepository bookingRepository, BookingMapper bookingMapper, ItemRepository itemRepository) {
-        this.userRepository = userRepository;
-        this.bookingRepository = bookingRepository;
-        this.bookingMapper = bookingMapper;
-        this.itemRepository = itemRepository;
-    }
 
     public BookingDtoOutput createBooking(BookingDtoInput bookingDtoInput, Long sharerId) {
         if (bookingDtoInput.getStart() == null) {
@@ -94,23 +87,23 @@ public class BookingService {
         Sort sort = Sort.by(Sort.Direction.DESC, "start");
         switch (state) {
             case "ALL":
-                return bookingRepository.findAll(withBookerId(userId), sort).stream().map(bookingMapper::bookingToBookingDtoOutput).collect(Collectors.toList());
+                return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId), sort));
             case "CURRENT":
-                return bookingRepository.findAll(withBookerId(userId)
-                        .and(startBeforeCurrentTime())
-                        .and(endAfterCurrentTime()), sort).stream().map(bookingMapper::bookingToBookingDtoOutput).collect(Collectors.toList());
+                return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
+                                            .and(BookingSpecifications.startBeforeCurrentTime())
+                                            .and(BookingSpecifications.endAfterCurrentTime()), sort));
             case "PAST":
-                return bookingRepository.findAll(withBookerId(userId)
-                        .and(endBeforeCurrentTime()), sort).stream().map(bookingMapper::bookingToBookingDtoOutput).collect(Collectors.toList());
+                return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
+                                            .and(BookingSpecifications.endBeforeCurrentTime()), sort));
             case "FUTURE":
-                return  bookingRepository.findAll(withBookerId(userId)
-                        .and(startAfterCurrentTime()), sort).stream().map(bookingMapper::bookingToBookingDtoOutput).collect(Collectors.toList());
+                return  mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
+                                            .and(BookingSpecifications.startAfterCurrentTime()), sort));
             case "WAITING":
-                return bookingRepository.findAll(withBookerId(userId)
-                        .and(withStatus(BookingStatus.WAITING)), sort).stream().map(bookingMapper::bookingToBookingDtoOutput).collect(Collectors.toList());
+                return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
+                                            .and(BookingSpecifications.withStatus(BookingStatus.WAITING)), sort));
             case "REJECTED":
-                return bookingRepository.findAll(withBookerId(userId)
-                        .and(withStatus(BookingStatus.REJECTED)), sort).stream().map(bookingMapper::bookingToBookingDtoOutput).collect(Collectors.toList());
+                return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
+                                          .and(BookingSpecifications.withStatus(BookingStatus.REJECTED)), sort));
             default:
                 throw new UnsupportedStatusException(state);
         }
@@ -123,25 +116,30 @@ public class BookingService {
         Sort sort = Sort.by(Sort.Direction.DESC, "start");
         switch (state) {
             case "ALL":
-                return bookingRepository.findAll(withOwnerId(userId), sort).stream().map(bookingMapper::bookingToBookingDtoOutput).collect(Collectors.toList());
+                return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId), sort));
             case "CURRENT":
-                return bookingRepository.findAll(withOwnerId(userId)
-                        .and(startBeforeCurrentTime())
-                        .and(endAfterCurrentTime()), sort).stream().map(bookingMapper::bookingToBookingDtoOutput).collect(Collectors.toList());
+                return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId)
+                                            .and(BookingSpecifications.startBeforeCurrentTime())
+                                            .and(BookingSpecifications.endAfterCurrentTime()), sort));
             case "PAST":
-                return bookingRepository.findAll(withOwnerId(userId)
-                        .and(endBeforeCurrentTime()), sort).stream().map(bookingMapper::bookingToBookingDtoOutput).collect(Collectors.toList());
+                return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId)
+                                            .and(BookingSpecifications.endBeforeCurrentTime()), sort));
             case "FUTURE":
-                return  bookingRepository.findAll(withOwnerId(userId)
-                        .and(startAfterCurrentTime()), sort).stream().map(bookingMapper::bookingToBookingDtoOutput).collect(Collectors.toList());
+                return  mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId)
+                                            .and(BookingSpecifications.startAfterCurrentTime()), sort));
             case "WAITING":
-                return bookingRepository.findAll(withOwnerId(userId)
-                        .and(withStatus(BookingStatus.WAITING)), sort).stream().map(bookingMapper::bookingToBookingDtoOutput).collect(Collectors.toList());
+                return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId)
+                                            .and(BookingSpecifications.withStatus(BookingStatus.WAITING)), sort));
             case "REJECTED":
-                return bookingRepository.findAll(withOwnerId(userId)
-                        .and(withStatus(BookingStatus.REJECTED)), sort).stream().map(bookingMapper::bookingToBookingDtoOutput).collect(Collectors.toList());
+                return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId)
+                                            .and(BookingSpecifications.withStatus(BookingStatus.REJECTED)), sort));
             default:
                 throw new UnsupportedStatusException(state);
         }
+    }
+    private List<BookingDtoOutput> mapBookingsToDtoOutput(List<Booking> bookings) {
+        return bookings.stream()
+                .map(bookingMapper::bookingToBookingDtoOutput)
+                .collect(Collectors.toList());
     }
 }

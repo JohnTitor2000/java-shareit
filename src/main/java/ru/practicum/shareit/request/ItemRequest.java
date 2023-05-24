@@ -2,7 +2,6 @@ package ru.practicum.shareit.request;
 
 import lombok.Data;
 import ru.practicum.shareit.user.User;
-
 import javax.validation.constraints.Positive;
 import java.time.LocalDateTime;
 
@@ -11,6 +10,6 @@ public class ItemRequest {
     @Positive
     private Long id;
     private String description;
-    private User requester;
+    private User requestor;
     private LocalDateTime created;
 }
