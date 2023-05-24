@@ -3,19 +3,25 @@ package ru.practicum.shareit.booking;
 import lombok.Data;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.User;
-
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Positive;
+import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Data
+@Entity
 public class Booking {
-    @Positive
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
+    @Column(name = "start_time")
     LocalDateTime start;
+    @Column(name = "end_time")
     LocalDateTime end;
+    @ManyToOne
+    @JoinColumn(name = "item_id")
     Item item;
+    @ManyToOne
+    @JoinColumn(name = "booker_id")
     User booker;
-    @Pattern(regexp = "WAITING|APPROVED|REJECTED|CANCELED")
-    String status;
+    @Enumerated(EnumType.STRING)
+    BookingStatus status;
 }
