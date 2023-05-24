@@ -137,6 +137,7 @@ public class BookingService {
                 throw new UnsupportedStatusException(state);
         }
     }
+    
     private List<BookingDtoOutput> mapBookingsToDtoOutput(List<Booking> bookings) {
         return bookings.stream()
                 .map(bookingMapper::bookingToBookingDtoOutput)
