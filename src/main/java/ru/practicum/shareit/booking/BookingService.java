@@ -2,6 +2,9 @@ package ru.practicum.shareit.booking;
 
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.dto.BookingDtoInput;
@@ -80,67 +83,74 @@ public class BookingService {
         return bookingMapper.bookingToBookingDtoOutput(booking);
     }
 
-    public List<BookingDtoOutput> getBookingsByUserId(String state, Long userId) {
+    public List<BookingDtoOutput> getBookingsByUserId(String state, Long userId, Integer from, Integer size) {
+        if (from == 0 && size == 0) {
+            throw new BadRequestException("cant");
+        }
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException("User not found.");
         }
-        Sort sort = Sort.by(Sort.Direction.DESC, "start");
+
+        Pageable pageable  = PageRequest.of(0, 100, Sort.Direction.DESC, "start");
+
         switch (state) {
             case "ALL":
-                return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId), sort));
+                List<BookingDtoOutput> result = mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId), pageable)).getContent().stream().skip(from).limit(size).collect(Collectors.toList());
+                return result;
             case "CURRENT":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
-                                            .and(BookingSpecifications.startBeforeCurrentTime())
-                                            .and(BookingSpecifications.endAfterCurrentTime()), sort));
+                        .and(BookingSpecifications.startBeforeCurrentTime())
+                        .and(BookingSpecifications.endAfterCurrentTime()), pageable )).getContent();
             case "PAST":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
-                                            .and(BookingSpecifications.endBeforeCurrentTime()), sort));
+                        .and(BookingSpecifications.endBeforeCurrentTime()), pageable )).getContent();
             case "FUTURE":
-                return  mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
-                                            .and(BookingSpecifications.startAfterCurrentTime()), sort));
+                return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
+                        .and(BookingSpecifications.startAfterCurrentTime()), pageable )).getContent();
             case "WAITING":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
-                                            .and(BookingSpecifications.withStatus(BookingStatus.WAITING)), sort));
+                        .and(BookingSpecifications.withStatus(BookingStatus.WAITING)), pageable )).getContent();
             case "REJECTED":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
-                                          .and(BookingSpecifications.withStatus(BookingStatus.REJECTED)), sort));
+                        .and(BookingSpecifications.withStatus(BookingStatus.REJECTED)), pageable )).getContent();
             default:
                 throw new UnsupportedStatusException(state);
         }
     }
 
-    public List<BookingDtoOutput> getBookingsByOwnerId(String state, Long userId) {
+    public List<BookingDtoOutput> getBookingsByOwnerId(String state, Long userId, Integer from, Integer size) {
+        if (from == 0 && size == 0) {
+            throw new BadRequestException("cant");
+        }
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException("User not found.");
         }
-        Sort sort = Sort.by(Sort.Direction.DESC, "start");
+        Pageable pageable = PageRequest.of(0, 100, Sort.Direction.DESC, "start");
         switch (state) {
             case "ALL":
-                return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId), sort));
+                return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId), pageable)).getContent().stream().skip(from).limit(size).collect(Collectors.toList());
             case "CURRENT":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId)
-                                            .and(BookingSpecifications.startBeforeCurrentTime())
-                                            .and(BookingSpecifications.endAfterCurrentTime()), sort));
+                        .and(BookingSpecifications.startBeforeCurrentTime())
+                        .and(BookingSpecifications.endAfterCurrentTime()), pageable)).getContent();
             case "PAST":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId)
-                                            .and(BookingSpecifications.endBeforeCurrentTime()), sort));
+                        .and(BookingSpecifications.endBeforeCurrentTime()), pageable)).getContent();
             case "FUTURE":
-                return  mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId)
-                                            .and(BookingSpecifications.startAfterCurrentTime()), sort));
+                return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId)
+                        .and(BookingSpecifications.startAfterCurrentTime()), pageable)).getContent();
             case "WAITING":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId)
-                                            .and(BookingSpecifications.withStatus(BookingStatus.WAITING)), sort));
+                        .and(BookingSpecifications.withStatus(BookingStatus.WAITING)), pageable)).getContent();
             case "REJECTED":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId)
-                                            .and(BookingSpecifications.withStatus(BookingStatus.REJECTED)), sort));
+                        .and(BookingSpecifications.withStatus(BookingStatus.REJECTED)), pageable)).getContent();
             default:
                 throw new UnsupportedStatusException(state);
         }
     }
-
-    private List<BookingDtoOutput> mapBookingsToDtoOutput(List<Booking> bookings) {
-        return bookings.stream()
-                .map(bookingMapper::bookingToBookingDtoOutput)
-                .collect(Collectors.toList());
+    private Page<BookingDtoOutput> mapBookingsToDtoOutput(Page<Booking> bookings) {
+        return bookings.map(bookingMapper::bookingToBookingDtoOutput);
     }
 }
+

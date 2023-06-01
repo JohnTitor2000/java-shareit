@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.BookingDtoInput;
 import ru.practicum.shareit.booking.dto.BookingDtoOutput;
@@ -34,12 +35,16 @@ public class BookingController {
     }
 
     @GetMapping()
-    public List<BookingDtoOutput> getBookingsByUserId(@RequestParam(required = false, defaultValue = "ALL") String state, @RequestHeader(name = "X-Sharer-User-Id") Long userId) {
-        return bookingService.getBookingsByUserId(state, userId);
+    public List<BookingDtoOutput> getBookingsByUserId(@RequestParam(name = "from", required = false, defaultValue = "0") Integer from,
+                                                      @RequestParam(name = "size", required = false, defaultValue = "10") Integer size,
+                                                      @RequestParam(required = false, defaultValue = "ALL") String state, @RequestHeader(name = "X-Sharer-User-Id") Long userId) {
+        return bookingService.getBookingsByUserId(state, userId, from, size);
     }
 
     @GetMapping("/owner")
-    public List<BookingDtoOutput> getBookingsByOwnerId(@RequestParam(required = false, defaultValue = "ALL") String state, @RequestHeader(name = "X-Sharer-User-Id") Long userId) {
-        return bookingService.getBookingsByOwnerId(state, userId);
+    public List<BookingDtoOutput> getBookingsByOwnerId(@RequestParam(name = "from", required = false, defaultValue = "0") Integer from,
+                                                       @RequestParam(name = "size", required = false, defaultValue = "10") Integer size,
+                                                       @RequestParam(required = false, defaultValue = "ALL") String state, @RequestHeader(name = "X-Sharer-User-Id") Long userId) {
+        return bookingService.getBookingsByOwnerId(state, userId, from, size);
     }
 }
