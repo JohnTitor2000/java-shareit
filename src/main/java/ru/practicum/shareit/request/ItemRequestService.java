@@ -25,6 +25,7 @@ public class ItemRequestService {
     ItemRequestMapper itemRequestMapper;
     ItemRequestRepository itemRequestRepository;
     ItemRepository itemRepository;
+
     public ItemRequest saveRequest(ItemRequestDtoInput itemRequestDtoInput, Long userId) {
         if (itemRequestDtoInput.getDescription() == null) {
             throw new BadRequestException("Description cant be null");

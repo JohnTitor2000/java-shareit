@@ -17,6 +17,7 @@ import java.util.List;
 public class ItemRequestController {
 
     ItemRequestService itemRequestService;
+
     @PostMapping
     public ItemRequest addRequest(@RequestBody ItemRequestDtoInput itemRequestDtoInput, @RequestHeader(name = "X-Sharer-User-Id") Long userId) {
         return itemRequestService.saveRequest(itemRequestDtoInput, userId);

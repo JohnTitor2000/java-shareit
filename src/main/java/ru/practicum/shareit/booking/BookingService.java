@@ -100,19 +100,19 @@ public class BookingService {
             case "CURRENT":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
                         .and(BookingSpecifications.startBeforeCurrentTime())
-                        .and(BookingSpecifications.endAfterCurrentTime()), pageable )).getContent();
+                        .and(BookingSpecifications.endAfterCurrentTime()), pageable)).getContent();
             case "PAST":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
-                        .and(BookingSpecifications.endBeforeCurrentTime()), pageable )).getContent();
+                        .and(BookingSpecifications.endBeforeCurrentTime()), pageable)).getContent();
             case "FUTURE":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
-                        .and(BookingSpecifications.startAfterCurrentTime()), pageable )).getContent();
+                        .and(BookingSpecifications.startAfterCurrentTime()), pageable)).getContent();
             case "WAITING":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
-                        .and(BookingSpecifications.withStatus(BookingStatus.WAITING)), pageable )).getContent();
+                        .and(BookingSpecifications.withStatus(BookingStatus.WAITING)), pageable)).getContent();
             case "REJECTED":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
-                        .and(BookingSpecifications.withStatus(BookingStatus.REJECTED)), pageable )).getContent();
+                        .and(BookingSpecifications.withStatus(BookingStatus.REJECTED)), pageable)).getContent();
             default:
                 throw new UnsupportedStatusException(state);
         }
@@ -149,6 +149,7 @@ public class BookingService {
                 throw new UnsupportedStatusException(state);
         }
     }
+
     private Page<BookingDtoOutput> mapBookingsToDtoOutput(Page<Booking> bookings) {
         return bookings.map(bookingMapper::bookingToBookingDtoOutput);
     }
