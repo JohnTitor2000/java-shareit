@@ -45,12 +45,12 @@ class BookingControllerTest {
     void addBooking() throws Exception {
         Booking expectedBooking = createBooking(1);
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
         BookingDtoOutput outputBooking = new BookingDtoOutput();
         outputBooking.setId(expectedBooking.getId());
-        outputBooking.setEnd(expectedBooking.getEnd());
-        outputBooking.setStart(expectedBooking.getStart());
+        outputBooking.setEnd(LocalDateTime.parse(expectedBooking.getEnd().format(formatter)));
+        outputBooking.setStart(LocalDateTime.parse(expectedBooking.getStart().format(formatter)));
         outputBooking.setStatus(expectedBooking.getStatus());
         outputBooking.setBooker(expectedBooking.getBooker());
         outputBooking.setItem(expectedBooking.getItem());
