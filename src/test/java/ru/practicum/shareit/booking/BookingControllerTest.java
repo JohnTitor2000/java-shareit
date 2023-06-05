@@ -15,13 +15,11 @@ import ru.practicum.shareit.user.User;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -61,7 +59,7 @@ class BookingControllerTest {
 
         mockMvc.perform(post("/bookings").header("X-Sharer-User-Id", expectedBooking.getBooker().getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"id\": 1, \"start\": \"" + expectedBooking.getStart() + "\", \"end\": \"" + expectedBooking.getEnd()+ "\"}"))
+                .content("{\"id\": 1, \"start\": \"" + expectedBooking.getStart() + "\", \"end\": \"" + expectedBooking.getEnd() + "\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(outputBooking.getId()))
                 .andExpect(jsonPath("$.end").value(outputBooking.getEnd().format(formatter)))
