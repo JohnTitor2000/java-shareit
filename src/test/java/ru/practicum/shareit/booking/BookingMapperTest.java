@@ -24,7 +24,7 @@ class BookingMapperTest {
         Item item = Mockito.mock(Item.class);
         User booker = Mockito.mock(User.class);
 
-        Booking booking = bookingMapper.bookingDtoOutputToBooking(bookingDtoInput, item, booker);
+        Booking booking = bookingMapper.bookingDtoInputToBooking(bookingDtoInput, item, booker);
 
         assertEquals(bookingDtoInput.getStart(), booking.getStart());
         assertEquals(bookingDtoInput.getEnd(), booking.getEnd());

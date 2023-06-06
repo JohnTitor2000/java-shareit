@@ -45,7 +45,7 @@ public class BookingService {
         } else if (sharerId.equals(itemRepository.findById(bookingDtoInput.getItemId()).orElseThrow(() -> new NotFoundException("User not found.")).getOwner().getId())) {
             throw new NotFoundException("You cant booking this item.");
         }
-        Booking booking = bookingMapper.bookingDtoOutputToBooking(bookingDtoInput,
+        Booking booking = bookingMapper.bookingDtoInputToBooking(bookingDtoInput,
                 itemRepository.findById(bookingDtoInput.getItemId()).orElseThrow(() -> new NotFoundException("Item not found")),
                 userRepository.findById(sharerId).orElseThrow(() -> new NotFoundException("User not found")));
         booking.setStatus(BookingStatus.WAITING);
@@ -95,7 +95,9 @@ public class BookingService {
 
         switch (state) {
             case "ALL":
-                List<BookingDtoOutput> result = mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId), pageable)).getContent().stream().skip(from).limit(size).collect(Collectors.toList());
+                Page<Booking> bookings = bookingRepository.findAll(BookingSpecifications.withBookerId(userId), pageable);
+                Page<BookingDtoOutput> bookingsAfterMap = mapBookingsToDtoOutput(bookings);
+                List<BookingDtoOutput> result = bookingsAfterMap.getContent().stream().skip(from).limit(size).collect(Collectors.toList());
                 return result;
             case "CURRENT":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
@@ -128,7 +130,10 @@ public class BookingService {
         Pageable pageable = PageRequest.of(0, 100, Sort.Direction.DESC, "start");
         switch (state) {
             case "ALL":
-                return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId), pageable)).getContent().stream().skip(from).limit(size).collect(Collectors.toList());
+                Page<Booking> bookings = bookingRepository.findAll(BookingSpecifications.withOwnerId(userId), pageable);
+                Page<BookingDtoOutput> bookingsAfterMap = mapBookingsToDtoOutput(bookings);
+                List<BookingDtoOutput> result = bookingsAfterMap.getContent().stream().skip(from).limit(size).collect(Collectors.toList());
+                return result;
             case "CURRENT":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId)
                         .and(BookingSpecifications.startBeforeCurrentTime())
