@@ -5,17 +5,27 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.PageRequest;
+import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingRepository;
+import ru.practicum.shareit.booking.BookingStatus;
+import ru.practicum.shareit.booking.dto.BookingIdAndBookerId;
 import ru.practicum.shareit.exaption.BadRequestException;
 import ru.practicum.shareit.exaption.NotFoundException;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDtoDefault;
+import ru.practicum.shareit.item.dto.ItemDtoWithBookings;
+import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserService;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -44,6 +54,20 @@ public class ItemServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+    }
+
+    @Test
+    public void getItemByIdTest_Successes() {
+        Item item = createItem(1);
+        Comment comment = createComment(1);
+        comment.setItem(item);
+        List<Comment> comments = Collections.singletonList(comment);
+
+        when(itemRepository.findById(item.getId())).thenReturn(Optional.of(item));
+        when(bookingRepository.findBookingsNext(anyLong(), anyLong(), any(PageRequest.class))).thenReturn(Collections.singletonList(createBooking(1)));
+        when(bookingRepository.findBookingsLast(anyLong(), anyLong(), any(PageRequest.class))).thenReturn(Collections.singletonList(createBooking(1)));
+        when(commentRepository.findByItemId(item.getId())).thenReturn(comments);
+        when(itemMapper.itemToItemDtoWithBookings(any(Item.class), any(BookingIdAndBookerId.class), any(BookingIdAndBookerId.class), anyList())).thenReturn(itemToItemDtoWithBookings(item, new BookingIdAndBookerId(1L, 1L), new BookingIdAndBookerId(1L, 1L), comments));
     }
 
     @Test
@@ -327,5 +351,60 @@ public class ItemServiceTest {
         assertEquals(expectedDtoList.get(1).getName(), result.get(1).getName());
         assertEquals(expectedDtoList.get(1).getDescription(), result.get(1).getDescription());
         assertEquals(expectedDtoList.get(1).getAvailable(), result.get(1).getAvailable());
+    }
+
+    private Booking createBooking(int number) {
+        Booking booking = new Booking();
+        booking.setId((long) number);
+        booking.setStart(LocalDateTime.now().plusDays(2));
+        booking.setEnd(LocalDateTime.now().plusDays(5));
+        booking.setStatus(BookingStatus.WAITING);
+        booking.setBooker(createUser(number));
+        booking.setItem(createItem(number));
+        return booking;
+    }
+
+    private User createUser(int number) {
+        User user = new User();
+        user.setId((long) number);
+        user.setName("John Doe " + String.valueOf(number));
+        user.setEmail("jd" + String.valueOf(number) + "@email.com");
+        return user;
+    }
+
+    private Item createItem(int number) {
+        Item item = new Item();
+        item.setId((long) number);
+        item.setName("things" + String.valueOf(number));
+        item.setDescription("description" + String.valueOf(number));
+        item.setAvailable(true);
+        item.setOwner(createUser(number + 1));
+        return item;
+    }
+
+    private Comment createComment(int i) {
+        Comment comment = new Comment();
+        comment.setAuthor(createUser(i+5));
+        comment.setCreated(LocalDateTime.now().plusHours(1));
+        comment.setId((long) i);
+        comment.setText("Lorems" + i);
+        return comment;
+    }
+    public ItemDtoWithBookings itemToItemDtoWithBookings(Item item, BookingIdAndBookerId last, BookingIdAndBookerId next, List<Comment> comment) {
+        if (item == null) {
+            return null;
+        }
+        List<CommentDto> comments = comment.stream().map(CommentMapper::commentToCommentDto).collect(Collectors.toList());
+        ItemDtoWithBookings itemDtoWithBookings = ItemDtoWithBookings.builder()
+                .id(item.getId())
+                .name(item.getName())
+                .description(item.getDescription())
+                .available(item.getAvailable())
+                .owner(item.getOwner())
+                .build();
+        itemDtoWithBookings.setComments(comments);
+        itemDtoWithBookings.setLastBooking(last);
+        itemDtoWithBookings.setNextBooking(next);
+        return itemDtoWithBookings;
     }
 }

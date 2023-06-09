@@ -6,11 +6,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import ru.practicum.shareit.booking.dto.BookingDtoInput;
 import ru.practicum.shareit.booking.dto.BookingDtoOutput;
-import ru.practicum.shareit.booking.specifications.BookingSpecifications;
 import ru.practicum.shareit.exaption.BadRequestException;
 import ru.practicum.shareit.exaption.NotFoundException;
 import ru.practicum.shareit.item.ItemRepository;
@@ -19,13 +17,12 @@ import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 public class BookingServiceTest {
@@ -56,6 +53,83 @@ public class BookingServiceTest {
         BookingDtoInput bookingDtoInput = BookingDtoInput.builder().build();
         bookingDtoInput.setStart(LocalDateTime.now().plusDays(1));
         bookingDtoInput.setEnd(LocalDateTime.now().minusDays(1));
+        Long sharerId = 1L;
+
+        // Act & Assert
+        Assertions.assertThrows(BadRequestException.class, () -> bookingService.createBooking(bookingDtoInput, sharerId));
+    }
+
+    @Test
+    public void testCreateBooking_InvalidStartTimeIsNull() {
+        // Arrange
+        BookingDtoInput bookingDtoInput = BookingDtoInput.builder().build();
+        bookingDtoInput.setStart(null);
+        bookingDtoInput.setEnd(LocalDateTime.now().plusDays(1));
+        Long sharerId = 1L;
+
+        // Act & Assert
+        Assertions.assertThrows(BadRequestException.class, () -> bookingService.createBooking(bookingDtoInput, sharerId));
+    }
+
+    @Test
+    public void testCreateBooking_InvalidEndBeforeStart() {
+        // Arrange
+        BookingDtoInput bookingDtoInput = BookingDtoInput.builder().build();
+        bookingDtoInput.setStart(LocalDateTime.now().plusDays(1));
+        bookingDtoInput.setEnd(LocalDateTime.now().plusHours(2));
+        Long sharerId = 1L;
+
+        // Act & Assert
+        Assertions.assertThrows(BadRequestException.class, () -> bookingService.createBooking(bookingDtoInput, sharerId));
+    }
+
+    @Test
+    public void testCreateBooking_InvalidEndAndStartInTheSameTime() {
+        // Arrange
+        BookingDtoInput bookingDtoInput = BookingDtoInput.builder().build();
+        bookingDtoInput.setStart(LocalDateTime.now());
+        bookingDtoInput.setEnd(LocalDateTime.now());
+        Long sharerId = 1L;
+
+        // Act & Assert
+        Assertions.assertThrows(BadRequestException.class, () -> bookingService.createBooking(bookingDtoInput, sharerId));
+    }
+
+    @Test
+    public void testCreateBooking_InvalidStartInPresent() {
+        // Arrange
+        BookingDtoInput bookingDtoInput = BookingDtoInput.builder().build();
+        bookingDtoInput.setStart(LocalDateTime.now().minusDays(2));
+        bookingDtoInput.setEnd(LocalDateTime.now().plusHours(1));
+        Long sharerId = 1L;
+
+        // Act & Assert
+        Assertions.assertThrows(BadRequestException.class, () -> bookingService.createBooking(bookingDtoInput, sharerId));
+    }
+
+    @Test
+    public void testCreateBooking_InvalidUserId() {
+        // Arrange
+        BookingDtoInput bookingDtoInput = BookingDtoInput.builder().build();
+        bookingDtoInput.setStart(LocalDateTime.now().plusDays(2));
+        bookingDtoInput.setEnd(LocalDateTime.now().plusDays(3));
+        bookingDtoInput.setItemId(1L);
+        Long sharerId = 1L;
+        Item item = createItem(1);
+        item.getOwner().setId(1L);
+
+        when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
+
+        // Act & Assert
+        Assertions.assertThrows(NotFoundException.class, () -> bookingService.createBooking(bookingDtoInput, sharerId));
+    }
+
+    @Test
+    public void testCreateBooking_InvalidEndTimeIsNull() {
+        // Arrange
+        BookingDtoInput bookingDtoInput = BookingDtoInput.builder().build();
+        bookingDtoInput.setStart(LocalDateTime.now());
+        bookingDtoInput.setEnd(null);
         Long sharerId = 1L;
 
         // Act & Assert
@@ -109,6 +183,32 @@ public class BookingServiceTest {
     }
 
     @Test
+    public void testCreateBooking_InvalidItemNotAvailable() {
+        Booking booking = createBooking(1);
+        booking.getItem().setAvailable(false);
+        BookingDtoInput bookingDtoInput = BookingDtoInput.builder()
+                .itemId(booking.getItem().getId())
+                .end(booking.getEnd())
+                .start(booking.getStart())
+                .build();
+        BookingDtoOutput bookingDtoOutput = new BookingDtoOutput();
+        bookingDtoOutput.setItem(booking.getItem());
+        bookingDtoOutput.setStart(booking.getStart());
+        bookingDtoOutput.setEnd(booking.getEnd());
+        bookingDtoOutput.setStatus(booking.getStatus());
+        bookingDtoOutput.setBooker(booking.getBooker());
+        bookingDtoOutput.setId(booking.getId());
+
+        when(bookingRepository.save(booking)).thenReturn(booking);
+        when(itemRepository.findById(booking.getItem().getId())).thenReturn(Optional.of(booking.getItem()));
+        when(userRepository.findById(booking.getBooker().getId())).thenReturn(Optional.of(booking.getBooker()));
+        when(bookingMapper.bookingDtoInputToBooking(bookingDtoInput, booking.getItem(), booking.getBooker())).thenReturn(booking);
+        when(bookingMapper.bookingToBookingDtoOutput(booking)).thenReturn(bookingDtoOutput);
+
+        Assertions.assertThrows(BadRequestException.class, () -> bookingService.createBooking(bookingDtoInput, booking.getBooker().getId()));
+    }
+
+    @Test
     public void testGetBooking_TargetBookingExist() {
         Booking booking = createBooking(1);
         BookingDtoOutput bookingDtoOutput = new BookingDtoOutput();
@@ -158,31 +258,395 @@ public class BookingServiceTest {
         assertEquals(BookingStatus.APPROVED, result.getStatus());
     }
 
-        @Test
-        public void testGetBookingsByUserId_GetThreeResults() {
-            List<Booking> bookings = Arrays.asList(createBooking(1), createBooking(2), createBooking(3));
-            bookings.get(1).setBooker(bookings.get(0).getBooker());
-            bookings.get(2).setBooker(bookings.get(0).getBooker());
-            Long userId = bookings.get(0).getBooker().getId();
-            Page<Booking> mockBookingPage = new PageImpl<>(bookings);
+    @Test
+    public void testEditBookingStatus_Rejected() {
+        Booking booking = createBooking(1);
+        BookingDtoOutput bookingDtoOutput = new BookingDtoOutput();
+        bookingDtoOutput.setId(booking.getId());
+        bookingDtoOutput.setStart(booking.getStart());
+        bookingDtoOutput.setEnd(booking.getEnd());
+        bookingDtoOutput.setBooker(booking.getBooker());
+        bookingDtoOutput.setStatus(BookingStatus.REJECTED);
+        bookingDtoOutput.setItem(booking.getItem());
 
-            Pageable pageable  = PageRequest.of(0, 100, Sort.Direction.DESC, "start");
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(booking)).thenReturn(booking);
+        when(userRepository.existsById(2L)).thenReturn(true);
+        when(bookingMapper.bookingToBookingDtoOutput(booking)).thenReturn(bookingDtoOutput);
 
-            when(bookingRepository.findAll(BookingSpecifications.withBookerId(userId), pageable)).thenReturn(mockBookingPage);
-            when(userRepository.existsById(1L)).thenReturn(true);
+        BookingDtoOutput result = bookingService.editBookingStatus(booking.getId(), false, booking.getItem().getOwner().getId());
 
-            List<BookingDtoOutput> result = bookingService.getBookingsByUserId("ALL", 1L, 0, 10);
-
-            assertEquals(result.size(), 3);
-            assertEquals(bookings.get(0).getId(), result.get(0).getId());
-            assertEquals(bookings.get(0).getBooker(), result.get(0).getBooker());
-            assertEquals(BookingStatus.WAITING, result.get(0).getStatus());
-        }
-
-    public void testGetBookingsByOwner_GetThreeResults() {
-
+        assertEquals(booking.getId(), result.getId());
+        assertEquals(booking.getEnd(), result.getEnd());
+        assertEquals(booking.getStart(), result.getStart());
+        assertEquals(booking.getBooker(), result.getBooker());
+        assertEquals(BookingStatus.REJECTED, result.getStatus());
     }
 
+    @Test
+    public void testEditBookingStatus_CantEdit() {
+        Booking booking = createBooking(1);
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(bookingRepository.save(booking)).thenReturn(booking);
+        when(userRepository.existsById(10L)).thenReturn(true);
+
+        assertThrows(NotFoundException.class, () -> bookingService.editBookingStatus(booking.getId(), true, 10L));
+    }
+
+    @Test
+    public void testEditBookingStatus_AlreadyApproved() {
+        Booking booking = createBooking(1);
+        booking.setStatus(BookingStatus.APPROVED);
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(userRepository.existsById(2L)).thenReturn(true);
+
+        assertThrows(BadRequestException.class, () -> bookingService.editBookingStatus(booking.getId(), true, booking.getItem().getOwner().getId()));
+    }
+
+    @Test
+    public void testEditBookingStatus_UserNotFound() {
+        Booking booking = createBooking(1);
+        when(userRepository.existsById(2L)).thenReturn(false);
+        assertThrows(NotFoundException.class, () -> bookingService.editBookingStatus(booking.getId(), true, booking.getItem().getOwner().getId()));
+    }
+
+    @Test
+    public void testGetBookingsByUserIdAll_GetThreeResults() {
+        List<Booking> bookings = Arrays.asList(createBooking(1), createBooking(2), createBooking(3));
+        bookings.get(1).setBooker(bookings.get(0).getBooker());
+        bookings.get(2).setBooker(bookings.get(0).getBooker());
+        Long userId = bookings.get(0).getBooker().getId();
+        BookingDtoOutput book1 = bookingToBookingDtoOutput(bookings.get(0));
+        BookingDtoOutput book2 = bookingToBookingDtoOutput(bookings.get(1));
+        BookingDtoOutput book3 = bookingToBookingDtoOutput(bookings.get(2));
+
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(0))).thenReturn(book1);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(1))).thenReturn(book2);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(2))).thenReturn(book3);
+        when(bookingRepository.findAll(any(Specification.class))).thenReturn(bookings);
+        when(userRepository.existsById(1L)).thenReturn(true);
+
+        List<BookingDtoOutput> result = bookingService.getBookingsByUserId("ALL", 1L, 0, 10);
+
+        assertEquals(result.size(), 3);
+        assertEquals(bookings.get(0).getId(), result.get(0).getId());
+        assertEquals(bookings.get(0).getBooker(), result.get(0).getBooker());
+        assertEquals(BookingStatus.WAITING, result.get(0).getStatus());
+    }
+
+    @Test
+    public void testGetBookingsByUserIdCurrent_GetThreeResults() {
+        List<Booking> bookings = Arrays.asList(createBooking(1), createBooking(2), createBooking(3));
+        bookings.get(1).setBooker(bookings.get(0).getBooker());
+        bookings.get(2).setBooker(bookings.get(0).getBooker());
+        bookings.get(0).setStart(LocalDateTime.now().minusDays(1));
+        bookings.get(0).setEnd(LocalDateTime.now().plusDays(1));
+        bookings.get(1).setStart(LocalDateTime.now().minusDays(1));
+        bookings.get(1).setEnd(LocalDateTime.now().plusDays(1));
+        bookings.get(2).setStart(LocalDateTime.now().minusDays(1));
+        bookings.get(2).setEnd(LocalDateTime.now().plusDays(1));
+        Long userId = bookings.get(0).getBooker().getId();
+        BookingDtoOutput book1 = bookingToBookingDtoOutput(bookings.get(0));
+        BookingDtoOutput book2 = bookingToBookingDtoOutput(bookings.get(1));
+        BookingDtoOutput book3 = bookingToBookingDtoOutput(bookings.get(2));
+
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(0))).thenReturn(book1);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(1))).thenReturn(book2);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(2))).thenReturn(book3);
+        when(bookingRepository.findAll(any(Specification.class))).thenReturn(bookings);
+        when(userRepository.existsById(1L)).thenReturn(true);
+
+        List<BookingDtoOutput> result = bookingService.getBookingsByUserId("CURRENT", 1L, 0, 10);
+
+        assertEquals(result.size(), 3);
+        assertEquals(bookings.get(0).getId(), result.get(0).getId());
+        assertEquals(bookings.get(0).getBooker(), result.get(0).getBooker());
+        assertEquals(BookingStatus.WAITING, result.get(0).getStatus());
+    }
+
+    @Test
+    public void testGetBookingsByUserIdPast_GetThreeResults() {
+        List<Booking> bookings = Arrays.asList(createBooking(1), createBooking(2), createBooking(3));
+        bookings.get(1).setBooker(bookings.get(0).getBooker());
+        bookings.get(2).setBooker(bookings.get(0).getBooker());
+        bookings.get(0).setStart(LocalDateTime.now().minusDays(2));
+        bookings.get(0).setEnd(LocalDateTime.now().minusDays(1));
+        bookings.get(1).setStart(LocalDateTime.now().minusDays(2));
+        bookings.get(1).setEnd(LocalDateTime.now().minusDays(1));
+        bookings.get(2).setStart(LocalDateTime.now().minusDays(2));
+        bookings.get(2).setEnd(LocalDateTime.now().minusDays(1));
+        Long userId = bookings.get(0).getBooker().getId();
+        BookingDtoOutput book1 = bookingToBookingDtoOutput(bookings.get(0));
+        BookingDtoOutput book2 = bookingToBookingDtoOutput(bookings.get(1));
+        BookingDtoOutput book3 = bookingToBookingDtoOutput(bookings.get(2));
+
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(0))).thenReturn(book1);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(1))).thenReturn(book2);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(2))).thenReturn(book3);
+        when(bookingRepository.findAll(any(Specification.class))).thenReturn(bookings);
+        when(userRepository.existsById(1L)).thenReturn(true);
+
+        List<BookingDtoOutput> result = bookingService.getBookingsByUserId("PAST", 1L, 0, 10);
+
+        assertEquals(result.size(), 3);
+        assertEquals(bookings.get(0).getId(), result.get(0).getId());
+        assertEquals(bookings.get(0).getBooker(), result.get(0).getBooker());
+        assertEquals(BookingStatus.WAITING, result.get(0).getStatus());
+    }
+
+    @Test
+    public void testGetBookingsByUserIdFuture_GetThreeResults() {
+        List<Booking> bookings = Arrays.asList(createBooking(1), createBooking(2), createBooking(3));
+        bookings.get(1).setBooker(bookings.get(0).getBooker());
+        bookings.get(2).setBooker(bookings.get(0).getBooker());
+        bookings.get(0).setStart(LocalDateTime.now().plusDays(1));
+        bookings.get(0).setEnd(LocalDateTime.now().plusDays(2));
+        bookings.get(1).setStart(LocalDateTime.now().plusDays(1));
+        bookings.get(1).setEnd(LocalDateTime.now().plusDays(2));
+        bookings.get(2).setStart(LocalDateTime.now().plusDays(1));
+        bookings.get(2).setEnd(LocalDateTime.now().plusDays(2));
+        Long userId = bookings.get(0).getBooker().getId();
+        BookingDtoOutput book1 = bookingToBookingDtoOutput(bookings.get(0));
+        BookingDtoOutput book2 = bookingToBookingDtoOutput(bookings.get(1));
+        BookingDtoOutput book3 = bookingToBookingDtoOutput(bookings.get(2));
+
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(0))).thenReturn(book1);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(1))).thenReturn(book2);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(2))).thenReturn(book3);
+        when(bookingRepository.findAll(any(Specification.class))).thenReturn(bookings);
+        when(userRepository.existsById(1L)).thenReturn(true);
+
+        List<BookingDtoOutput> result = bookingService.getBookingsByUserId("FUTURE", 1L, 0, 10);
+
+        assertEquals(result.size(), 3);
+        assertEquals(bookings.get(0).getId(), result.get(0).getId());
+        assertEquals(bookings.get(0).getBooker(), result.get(0).getBooker());
+        assertEquals(BookingStatus.WAITING, result.get(0).getStatus());
+    }
+
+    @Test
+    public void testGetBookingsByUserIdWaiting_GetThreeResults() {
+        List<Booking> bookings = Arrays.asList(createBooking(1), createBooking(2), createBooking(3));
+        bookings.get(1).setBooker(bookings.get(0).getBooker());
+        bookings.get(2).setBooker(bookings.get(0).getBooker());
+        bookings.get(0).setStart(LocalDateTime.now().plusDays(1));
+        bookings.get(0).setEnd(LocalDateTime.now().plusDays(2));
+        bookings.get(1).setStart(LocalDateTime.now().plusDays(1));
+        bookings.get(1).setEnd(LocalDateTime.now().plusDays(2));
+        bookings.get(2).setStart(LocalDateTime.now().plusDays(1));
+        bookings.get(2).setEnd(LocalDateTime.now().plusDays(2));
+        Long userId = bookings.get(0).getBooker().getId();
+        BookingDtoOutput book1 = bookingToBookingDtoOutput(bookings.get(0));
+        BookingDtoOutput book2 = bookingToBookingDtoOutput(bookings.get(1));
+        BookingDtoOutput book3 = bookingToBookingDtoOutput(bookings.get(2));
+
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(0))).thenReturn(book1);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(1))).thenReturn(book2);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(2))).thenReturn(book3);
+        when(bookingRepository.findAll(any(Specification.class))).thenReturn(bookings);
+        when(userRepository.existsById(1L)).thenReturn(true);
+
+        List<BookingDtoOutput> result = bookingService.getBookingsByUserId("WAITING", 1L, 0, 10);
+
+        assertEquals(result.size(), 3);
+        assertEquals(bookings.get(0).getId(), result.get(0).getId());
+        assertEquals(bookings.get(0).getBooker(), result.get(0).getBooker());
+        assertEquals(BookingStatus.WAITING, result.get(0).getStatus());
+    }
+
+    @Test
+    public void testGetBookingsByUserIdRejected_GetThreeResults() {
+        List<Booking> bookings = Arrays.asList(createBooking(1), createBooking(2), createBooking(3));
+        bookings.get(1).setBooker(bookings.get(0).getBooker());
+        bookings.get(2).setBooker(bookings.get(0).getBooker());
+        bookings.get(0).setStatus(BookingStatus.REJECTED);
+        bookings.get(1).setStatus(BookingStatus.REJECTED);
+        bookings.get(2).setStatus(BookingStatus.REJECTED);
+        Long userId = bookings.get(0).getBooker().getId();
+        BookingDtoOutput book1 = bookingToBookingDtoOutput(bookings.get(0));
+        BookingDtoOutput book2 = bookingToBookingDtoOutput(bookings.get(1));
+        BookingDtoOutput book3 = bookingToBookingDtoOutput(bookings.get(2));
+
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(0))).thenReturn(book1);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(1))).thenReturn(book2);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(2))).thenReturn(book3);
+        when(bookingRepository.findAll(any(Specification.class))).thenReturn(bookings);
+        when(userRepository.existsById(1L)).thenReturn(true);
+
+        List<BookingDtoOutput> result = bookingService.getBookingsByUserId("REJECTED", 1L, 0, 10);
+
+        assertEquals(result.size(), 3);
+        assertEquals(bookings.get(0).getId(), result.get(0).getId());
+        assertEquals(bookings.get(0).getBooker(), result.get(0).getBooker());
+        assertEquals(BookingStatus.REJECTED, result.get(0).getStatus());
+    }
+
+    @Test
+    public void testGetBookingsByOwnerWaiting_GetThreeResults() {
+        List<Booking> bookings = Arrays.asList(createBooking(1), createBooking(2), createBooking(3));
+        bookings.get(1).getItem().setOwner(bookings.get(0).getItem().getOwner());
+        bookings.get(2).getItem().setOwner(bookings.get(0).getItem().getOwner());
+        Long userId = bookings.get(0).getBooker().getId();
+        BookingDtoOutput book1 = bookingToBookingDtoOutput(bookings.get(0));
+        BookingDtoOutput book2 = bookingToBookingDtoOutput(bookings.get(1));
+        BookingDtoOutput book3 = bookingToBookingDtoOutput(bookings.get(2));
+
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(0))).thenReturn(book1);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(1))).thenReturn(book2);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(2))).thenReturn(book3);
+        when(bookingRepository.findAll(any(Specification.class))).thenReturn(bookings);
+        when(userRepository.existsById(2L)).thenReturn(true);
+
+        List<BookingDtoOutput> result = bookingService.getBookingsByOwnerId("WAITING", 2L, 0, 10);
+
+        assertEquals(result.size(), 3);
+        assertEquals(bookings.get(0).getId(), result.get(0).getId());
+        assertEquals(bookings.get(0).getBooker(), result.get(0).getBooker());
+        assertEquals(BookingStatus.WAITING, result.get(0).getStatus());
+    }
+
+    @Test
+    public void testGetBookingsByOwnerRejected_GetThreeResults() {
+        List<Booking> bookings = Arrays.asList(createBooking(1), createBooking(2), createBooking(3));
+        bookings.get(1).getItem().setOwner(bookings.get(0).getItem().getOwner());
+        bookings.get(2).getItem().setOwner(bookings.get(0).getItem().getOwner());
+        bookings.get(0).setStatus(BookingStatus.REJECTED);
+        bookings.get(1).setStatus(BookingStatus.REJECTED);
+        bookings.get(2).setStatus(BookingStatus.REJECTED);
+        Long userId = bookings.get(0).getBooker().getId();
+        BookingDtoOutput book1 = bookingToBookingDtoOutput(bookings.get(0));
+        BookingDtoOutput book2 = bookingToBookingDtoOutput(bookings.get(1));
+        BookingDtoOutput book3 = bookingToBookingDtoOutput(bookings.get(2));
+
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(0))).thenReturn(book1);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(1))).thenReturn(book2);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(2))).thenReturn(book3);
+        when(bookingRepository.findAll(any(Specification.class))).thenReturn(bookings);
+        when(userRepository.existsById(2L)).thenReturn(true);
+
+        List<BookingDtoOutput> result = bookingService.getBookingsByOwnerId("REJECTED", 2L, 0, 10);
+
+        assertEquals(result.size(), 3);
+        assertEquals(bookings.get(0).getId(), result.get(0).getId());
+        assertEquals(bookings.get(0).getBooker(), result.get(0).getBooker());
+        assertEquals(BookingStatus.REJECTED, result.get(0).getStatus());
+    }
+
+    @Test
+    public void testGetBookingsByOwnerAll_GetThreeResults() {
+        List<Booking> bookings = Arrays.asList(createBooking(1), createBooking(2), createBooking(3));
+        bookings.get(1).getItem().setOwner(bookings.get(0).getItem().getOwner());
+        bookings.get(2).getItem().setOwner(bookings.get(0).getItem().getOwner());
+        Long userId = bookings.get(0).getBooker().getId();
+        BookingDtoOutput book1 = bookingToBookingDtoOutput(bookings.get(0));
+        BookingDtoOutput book2 = bookingToBookingDtoOutput(bookings.get(1));
+        BookingDtoOutput book3 = bookingToBookingDtoOutput(bookings.get(2));
+
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(0))).thenReturn(book1);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(1))).thenReturn(book2);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(2))).thenReturn(book3);
+        when(bookingRepository.findAll(any(Specification.class))).thenReturn(bookings);
+        when(userRepository.existsById(2L)).thenReturn(true);
+
+        List<BookingDtoOutput> result = bookingService.getBookingsByOwnerId("ALL", 2L, 0, 10);
+
+        assertEquals(result.size(), 3);
+        assertEquals(bookings.get(0).getId(), result.get(0).getId());
+        assertEquals(bookings.get(0).getBooker(), result.get(0).getBooker());
+        assertEquals(BookingStatus.WAITING, result.get(0).getStatus());
+    }
+
+    @Test
+    public void testGetBookingsByOwnerCurrent_GetThreeResults() {
+        List<Booking> bookings = Arrays.asList(createBooking(1), createBooking(2), createBooking(3));
+        bookings.get(1).getItem().setOwner(bookings.get(0).getItem().getOwner());
+        bookings.get(2).getItem().setOwner(bookings.get(0).getItem().getOwner());
+        bookings.get(0).setStart(LocalDateTime.now().minusDays(1));
+        bookings.get(0).setEnd(LocalDateTime.now().plusDays(1));
+        bookings.get(1).setStart(LocalDateTime.now().minusDays(1));
+        bookings.get(1).setEnd(LocalDateTime.now().plusDays(1));
+        bookings.get(2).setStart(LocalDateTime.now().minusDays(1));
+        bookings.get(2).setEnd(LocalDateTime.now().plusDays(1));
+        Long userId = bookings.get(0).getBooker().getId();
+        BookingDtoOutput book1 = bookingToBookingDtoOutput(bookings.get(0));
+        BookingDtoOutput book2 = bookingToBookingDtoOutput(bookings.get(1));
+        BookingDtoOutput book3 = bookingToBookingDtoOutput(bookings.get(2));
+
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(0))).thenReturn(book1);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(1))).thenReturn(book2);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(2))).thenReturn(book3);
+        when(bookingRepository.findAll(any(Specification.class))).thenReturn(bookings);
+        when(userRepository.existsById(2L)).thenReturn(true);
+
+        List<BookingDtoOutput> result = bookingService.getBookingsByOwnerId("CURRENT", 2L, 0, 10);
+
+        assertEquals(result.size(), 3);
+        assertEquals(bookings.get(0).getId(), result.get(0).getId());
+        assertEquals(bookings.get(0).getBooker(), result.get(0).getBooker());
+        assertEquals(BookingStatus.WAITING, result.get(0).getStatus());
+    }
+
+    @Test
+    public void testGetBookingsByOwnerFuture_GetThreeResults() {
+        List<Booking> bookings = Arrays.asList(createBooking(1), createBooking(2), createBooking(3));
+        bookings.get(1).getItem().setOwner(bookings.get(0).getItem().getOwner());
+        bookings.get(2).getItem().setOwner(bookings.get(0).getItem().getOwner());
+        bookings.get(0).setStart(LocalDateTime.now().plusDays(1));
+        bookings.get(0).setEnd(LocalDateTime.now().plusDays(2));
+        bookings.get(1).setStart(LocalDateTime.now().plusDays(1));
+        bookings.get(1).setEnd(LocalDateTime.now().plusDays(2));
+        bookings.get(2).setStart(LocalDateTime.now().plusDays(1));
+        bookings.get(2).setEnd(LocalDateTime.now().plusDays(2));
+        Long userId = bookings.get(0).getBooker().getId();
+        BookingDtoOutput book1 = bookingToBookingDtoOutput(bookings.get(0));
+        BookingDtoOutput book2 = bookingToBookingDtoOutput(bookings.get(1));
+        BookingDtoOutput book3 = bookingToBookingDtoOutput(bookings.get(2));
+
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(0))).thenReturn(book1);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(1))).thenReturn(book2);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(2))).thenReturn(book3);
+        when(bookingRepository.findAll(any(Specification.class))).thenReturn(bookings);
+        when(userRepository.existsById(2L)).thenReturn(true);
+
+        List<BookingDtoOutput> result = bookingService.getBookingsByOwnerId("FUTURE", 2L, 0, 10);
+
+        assertEquals(result.size(), 3);
+        assertEquals(bookings.get(0).getId(), result.get(0).getId());
+        assertEquals(bookings.get(0).getBooker(), result.get(0).getBooker());
+        assertEquals(BookingStatus.WAITING, result.get(0).getStatus());
+    }
+
+    @Test
+    public void testGetBookingsByOwnerPast_GetThreeResults() {
+        List<Booking> bookings = Arrays.asList(createBooking(1), createBooking(2), createBooking(3));
+        bookings.get(1).getItem().setOwner(bookings.get(0).getItem().getOwner());
+        bookings.get(2).getItem().setOwner(bookings.get(0).getItem().getOwner());
+        bookings.get(0).setStart(LocalDateTime.now().minusDays(2));
+        bookings.get(0).setEnd(LocalDateTime.now().minusDays(1));
+        bookings.get(1).setStart(LocalDateTime.now().minusDays(2));
+        bookings.get(1).setEnd(LocalDateTime.now().minusDays(1));
+        bookings.get(2).setStart(LocalDateTime.now().minusDays(2));
+        bookings.get(2).setEnd(LocalDateTime.now().minusDays(1));
+        Long userId = bookings.get(0).getBooker().getId();
+        BookingDtoOutput book1 = bookingToBookingDtoOutput(bookings.get(0));
+        BookingDtoOutput book2 = bookingToBookingDtoOutput(bookings.get(1));
+        BookingDtoOutput book3 = bookingToBookingDtoOutput(bookings.get(2));
+
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(0))).thenReturn(book1);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(1))).thenReturn(book2);
+        when(bookingMapper.bookingToBookingDtoOutput(bookings.get(2))).thenReturn(book3);
+        when(bookingRepository.findAll(any(Specification.class))).thenReturn(bookings);
+        when(userRepository.existsById(2L)).thenReturn(true);
+
+        List<BookingDtoOutput> result = bookingService.getBookingsByOwnerId("PAST", 2L, 0, 10);
+
+        assertEquals(result.size(), 3);
+        assertEquals(bookings.get(0).getId(), result.get(0).getId());
+        assertEquals(bookings.get(0).getBooker(), result.get(0).getBooker());
+        assertEquals(BookingStatus.WAITING, result.get(0).getStatus());
+    }
 
     private Booking createBooking(int number) {
         Booking booking = new Booking();
@@ -213,7 +677,14 @@ public class BookingServiceTest {
         return item;
     }
 
-    private Page<BookingDtoOutput> mapBookingsToDtoOutput(Page<Booking> bookings) {
-        return bookings.map(bookingMapper::bookingToBookingDtoOutput);
+    public BookingDtoOutput bookingToBookingDtoOutput(Booking booking) {
+        BookingDtoOutput bookingDtoOutput = new BookingDtoOutput();
+        bookingDtoOutput.setId(booking.getId());
+        bookingDtoOutput.setItem(booking.getItem());
+        bookingDtoOutput.setBooker(booking.getBooker());
+        bookingDtoOutput.setEnd(booking.getEnd());
+        bookingDtoOutput.setStart(booking.getStart());
+        bookingDtoOutput.setStatus(booking.getStatus());
+        return bookingDtoOutput;
     }
 }

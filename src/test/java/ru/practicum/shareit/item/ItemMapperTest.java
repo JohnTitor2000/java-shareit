@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class ItemMapperTest {
 
@@ -100,6 +101,30 @@ public class ItemMapperTest {
         assertEquals(owner.getId(), itemDtoDefault.getOwner().getId());
         assertEquals(owner.getName(), itemDtoDefault.getOwner().getName());
         assertEquals(owner.getEmail(), itemDtoDefault.getOwner().getEmail());
+    }
+
+    @Test
+    public void testNullToItem_Null() {
+
+        Item item = itemMapper.itemDTOToItem(null);
+
+        assertNull(item);
+    }
+
+    @Test
+    public void testNullToItemDtoWithBooking_Null() {
+
+        ItemDtoWithBookings item = itemMapper.itemToItemDtoWithBookings(null, null, null, null);
+
+        assertNull(item);
+    }
+
+    @Test
+    public void testItemToItemDtoDefaultNull() {
+
+        Item item = itemMapper.itemDTOToItem(null);
+
+        assertNull(item);
     }
 
     private Comment createComment(Long id, String text, Item item, LocalDateTime created, User author) {

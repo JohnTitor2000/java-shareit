@@ -2,10 +2,6 @@ package ru.practicum.shareit.booking;
 
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.dto.BookingDtoInput;
 import ru.practicum.shareit.booking.dto.BookingDtoOutput;
@@ -91,30 +87,26 @@ public class BookingService {
             throw new NotFoundException("User not found.");
         }
 
-        Pageable pageable  = PageRequest.of(0, 100, Sort.Direction.DESC, "start");
-
         switch (state) {
             case "ALL":
-                Page<Booking> bookings = bookingRepository.findAll(BookingSpecifications.withBookerId(userId), pageable);
-                Page<BookingDtoOutput> bookingsAfterMap = mapBookingsToDtoOutput(bookings);
-                List<BookingDtoOutput> result = bookingsAfterMap.getContent().stream().skip(from).limit(size).collect(Collectors.toList());
-                return result;
+                List<BookingDtoOutput> bookings = bookingRepository.findAll(BookingSpecifications.withBookerId(userId)).stream().map(bookingMapper::bookingToBookingDtoOutput).collect(Collectors.toList());
+                return bookings.stream().skip(from).limit(size).collect(Collectors.toList());
             case "CURRENT":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
                         .and(BookingSpecifications.startBeforeCurrentTime())
-                        .and(BookingSpecifications.endAfterCurrentTime()), pageable)).getContent();
+                        .and(BookingSpecifications.endAfterCurrentTime()))).stream().skip(from).limit(size).collect(Collectors.toList());
             case "PAST":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
-                        .and(BookingSpecifications.endBeforeCurrentTime()), pageable)).getContent();
+                        .and(BookingSpecifications.endBeforeCurrentTime()))).stream().skip(from).limit(size).collect(Collectors.toList());
             case "FUTURE":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
-                        .and(BookingSpecifications.startAfterCurrentTime()), pageable)).getContent();
+                        .and(BookingSpecifications.startAfterCurrentTime()))).stream().skip(from).limit(size).collect(Collectors.toList());
             case "WAITING":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
-                        .and(BookingSpecifications.withStatus(BookingStatus.WAITING)), pageable)).getContent();
+                        .and(BookingSpecifications.withStatus(BookingStatus.WAITING)))).stream().skip(from).limit(size).collect(Collectors.toList());
             case "REJECTED":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withBookerId(userId)
-                        .and(BookingSpecifications.withStatus(BookingStatus.REJECTED)), pageable)).getContent();
+                        .and(BookingSpecifications.withStatus(BookingStatus.REJECTED)))).stream().skip(from).limit(size).collect(Collectors.toList());
             default:
                 throw new UnsupportedStatusException(state);
         }
@@ -127,36 +119,35 @@ public class BookingService {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException("User not found.");
         }
-        Pageable pageable = PageRequest.of(0, 100, Sort.Direction.DESC, "start");
         switch (state) {
             case "ALL":
-                Page<Booking> bookings = bookingRepository.findAll(BookingSpecifications.withOwnerId(userId), pageable);
-                Page<BookingDtoOutput> bookingsAfterMap = mapBookingsToDtoOutput(bookings);
-                List<BookingDtoOutput> result = bookingsAfterMap.getContent().stream().skip(from).limit(size).collect(Collectors.toList());
+                List<Booking> bookings = bookingRepository.findAll(BookingSpecifications.withOwnerId(userId));
+                List<BookingDtoOutput> bookingsAfterMap = bookings.stream().map(bookingMapper::bookingToBookingDtoOutput).collect(Collectors.toList());
+                List<BookingDtoOutput> result = bookingsAfterMap.stream().skip(from).limit(size).collect(Collectors.toList());
                 return result;
             case "CURRENT":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId)
                         .and(BookingSpecifications.startBeforeCurrentTime())
-                        .and(BookingSpecifications.endAfterCurrentTime()), pageable)).getContent();
+                        .and(BookingSpecifications.endAfterCurrentTime()))).stream().skip(from).limit(size).collect(Collectors.toList());
             case "PAST":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId)
-                        .and(BookingSpecifications.endBeforeCurrentTime()), pageable)).getContent();
+                        .and(BookingSpecifications.endBeforeCurrentTime()))).stream().skip(from).limit(size).collect(Collectors.toList());
             case "FUTURE":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId)
-                        .and(BookingSpecifications.startAfterCurrentTime()), pageable)).getContent();
+                        .and(BookingSpecifications.startAfterCurrentTime()))).stream().skip(from).limit(size).collect(Collectors.toList());
             case "WAITING":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId)
-                        .and(BookingSpecifications.withStatus(BookingStatus.WAITING)), pageable)).getContent();
+                        .and(BookingSpecifications.withStatus(BookingStatus.WAITING)))).stream().skip(from).limit(size).collect(Collectors.toList());
             case "REJECTED":
                 return mapBookingsToDtoOutput(bookingRepository.findAll(BookingSpecifications.withOwnerId(userId)
-                        .and(BookingSpecifications.withStatus(BookingStatus.REJECTED)), pageable)).getContent();
+                        .and(BookingSpecifications.withStatus(BookingStatus.REJECTED)))).stream().skip(from).limit(size).collect(Collectors.toList());
             default:
                 throw new UnsupportedStatusException(state);
         }
     }
 
-    private Page<BookingDtoOutput> mapBookingsToDtoOutput(Page<Booking> bookings) {
-        return bookings.map(bookingMapper::bookingToBookingDtoOutput);
+    public List<BookingDtoOutput> mapBookingsToDtoOutput(List<Booking> bookings) {
+        return bookings.stream().map(bookingMapper::bookingToBookingDtoOutput).collect(Collectors.toList());
     }
 }
 

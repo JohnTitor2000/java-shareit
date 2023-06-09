@@ -30,6 +30,4 @@ public class ItemRequestMapper {
                 .build();
         return itemRequestOutput;
     }
-
-
 }
