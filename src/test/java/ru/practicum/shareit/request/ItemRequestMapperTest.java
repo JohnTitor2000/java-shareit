@@ -54,7 +54,7 @@ class ItemRequestMapperTest {
 
     private ItemRequest createItemRequest(int num) {
         ItemRequest itemRequest = new ItemRequest();
-        itemRequest.setRequester(createUser(num+3));
+        itemRequest.setRequester(createUser(num + 3));
         itemRequest.setCreated(LocalDateTime.now());
         itemRequest.setDescription("lorems" + num);
         itemRequest.setId((long) num);
@@ -81,7 +81,7 @@ class ItemRequestMapperTest {
 
     private Comment createComment(int i) {
         Comment comment = new Comment();
-        comment.setAuthor(createUser(i+5));
+        comment.setAuthor(createUser(i + 5));
         comment.setCreated(LocalDateTime.now().plusHours(1));
         comment.setId((long) i);
         comment.setText("Lorems" + i);

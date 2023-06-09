@@ -9,8 +9,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.practicum.shareit.item.ItemController;
-import ru.practicum.shareit.item.ItemService;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.request.dto.ItemRequestDtoInput;
@@ -23,7 +21,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -58,7 +55,6 @@ class ItemRequestControllerTest {
         ItemRequestDtoInput itemRequestDtoInput = new ItemRequestDtoInput();
         itemRequestDtoInput.setDescription(itemRequest.getDescription());
         when(itemRequestService.saveRequest(itemRequestDtoInput, itemRequest.getRequester().getId())).thenReturn(itemRequest);
-
         mockMvc.perform(post("/requests")
                         .header("X-Sharer-User-Id", itemRequest.getRequester().getId())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -164,7 +160,7 @@ class ItemRequestControllerTest {
 
     private ItemRequest createItemRequest(int num) {
         ItemRequest itemRequest = new ItemRequest();
-        itemRequest.setRequester(createUser(num+3));
+        itemRequest.setRequester(createUser(num + 3));
         itemRequest.setCreated(LocalDateTime.now());
         itemRequest.setDescription("lorems" + num);
         itemRequest.setId((long) num);
@@ -191,7 +187,7 @@ class ItemRequestControllerTest {
 
     private Comment createComment(int i) {
         Comment comment = new Comment();
-        comment.setAuthor(createUser(i+5));
+        comment.setAuthor(createUser(i + 5));
         comment.setCreated(LocalDateTime.now().plusHours(1));
         comment.setId((long) i);
         comment.setText("Lorems" + i);

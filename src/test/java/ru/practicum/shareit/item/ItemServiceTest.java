@@ -384,12 +384,13 @@ public class ItemServiceTest {
 
     private Comment createComment(int i) {
         Comment comment = new Comment();
-        comment.setAuthor(createUser(i+5));
+        comment.setAuthor(createUser(i + 5));
         comment.setCreated(LocalDateTime.now().plusHours(1));
         comment.setId((long) i);
         comment.setText("Lorems" + i);
         return comment;
     }
+
     public ItemDtoWithBookings itemToItemDtoWithBookings(Item item, BookingIdAndBookerId last, BookingIdAndBookerId next, List<Comment> comment) {
         if (item == null) {
             return null;

@@ -152,12 +152,10 @@ public class ItemControllerTest {
     public void testCreateItem() throws Exception {
         Long itemId = 1L;
         Long userId = 1L;
-
         User user = new User();
         user.setId(userId);
         user.setName("John Doe");
         user.setEmail("johndoe@email.com");
-
         ItemDtoDefault expectedItem = new ItemDtoDefault();
         expectedItem.setId(itemId);
         expectedItem.setName("Item 1");
@@ -191,12 +189,10 @@ public class ItemControllerTest {
     public void testUpdateItem() throws Exception {
         Long itemId = 1L;
         Long userId = 1L;
-
         User user = new User();
         user.setId(userId);
         user.setName("John Doe");
         user.setEmail("johndoe@email.com");
-
         ItemDtoDefault expectedItem = new ItemDtoDefault();
         expectedItem.setId(itemId);
         expectedItem.setName("Item 1");
