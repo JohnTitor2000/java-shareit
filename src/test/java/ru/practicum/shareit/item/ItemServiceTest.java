@@ -64,6 +64,63 @@ public class ItemServiceTest {
     }
 
     @Test
+    void getItemById_Success() {
+
+        Booking booking = createBooking(1);
+        Item item = booking.getItem();
+
+        ItemDtoWithBookings expected = new ItemDtoWithBookings();
+        expected.setId(item.getId());
+        expected.setAvailable(item.getAvailable());
+        expected.setName(item.getName());
+        expected.setOwner(item.getOwner());
+        expected.setDescription(item.getDescription());
+
+        when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
+        when(bookingRepository.findBookingsNext(anyLong(), anyLong(), any(PageRequest.class))).thenReturn(Collections.singletonList(createBooking(2)));
+        when(bookingRepository.findBookingsLast(anyLong(), anyLong(), any(PageRequest.class))).thenReturn(Collections.singletonList(createBooking(3)));
+        when(commentRepository.findByItemId(item.getId())).thenReturn(Collections.emptyList());
+        when(itemMapper.itemToItemDtoWithBookings(any(Item.class), any(BookingIdAndBookerId.class), any(BookingIdAndBookerId.class), anyList())).thenReturn(expected);
+
+        ItemDtoWithBookings actual = itemService.getItemById(item.getId(), item.getOwner().getId());
+
+        assertEquals(actual.getId(), expected.getId());
+        assertEquals(expected.getDescription(), actual.getDescription());
+        assertEquals(expected.getName(), actual.getName());
+        assertEquals(expected.getOwner(), actual.getOwner());
+
+    }
+
+    @Test
+    void getItemByUser_Success() {
+
+        Booking booking = createBooking(1);
+        Item item = booking.getItem();
+
+        ItemDtoWithBookings expected = new ItemDtoWithBookings();
+        expected.setId(item.getId());
+        expected.setAvailable(item.getAvailable());
+        expected.setName(item.getName());
+        expected.setOwner(item.getOwner());
+        expected.setDescription(item.getDescription());
+
+        when(userService.getUserById(anyLong())).thenReturn(item.getOwner());
+        when(itemRepository.findByOwnerIdOrderById(anyLong())).thenReturn(Collections.singletonList(item));
+        when(bookingRepository.findBookingsNext(anyLong(), anyLong(), any(PageRequest.class))).thenReturn(Collections.singletonList(createBooking(2)));
+        when(bookingRepository.findBookingsLast(anyLong(), anyLong(), any(PageRequest.class))).thenReturn(Collections.singletonList(createBooking(3)));
+        when(commentRepository.findByItemId(item.getId())).thenReturn(Collections.emptyList());
+        when(itemMapper.itemToItemDtoWithBookings(any(Item.class), any(BookingIdAndBookerId.class), any(BookingIdAndBookerId.class), anyList())).thenReturn(expected);
+
+        List<ItemDtoWithBookings> actual = itemService.getItemsByUser(item.getOwner().getId());
+
+        assertEquals(actual.get(0).getId(), expected.getId());
+        assertEquals(expected.getDescription(), actual.get(0).getDescription());
+        assertEquals(expected.getName(), actual.get(0).getName());
+        assertEquals(expected.getOwner(), actual.get(0).getOwner());
+
+    }
+
+    @Test
     public void getItemByIdTest_Successes() {
         Item item = createItem(1);
         Comment comment = createComment(1);

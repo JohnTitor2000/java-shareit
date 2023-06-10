@@ -72,7 +72,6 @@ public class ItemService {
         if (user == null) {
             throw new NotFoundException("User not found.");
         }
-
         List<Item> items = itemRepository.findByOwnerIdOrderById(userId);
         List<ItemDtoWithBookings> itemsWithDates = new ArrayList<>();
         for (Item item : items) {
