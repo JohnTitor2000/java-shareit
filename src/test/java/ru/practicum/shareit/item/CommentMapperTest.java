@@ -26,7 +26,7 @@ public class CommentMapperTest {
 
         CommentMapper commentMapper = new CommentMapper();
 
-        Comment comment = commentMapper.commentDtoToComment(commentDto, userId, itemId, author, item);
+        Comment comment = commentMapper.commentDtoToComment(commentDto, author, item);
 
         Assertions.assertEquals(commentDto.getText(), comment.getText());
         Assertions.assertEquals(author, comment.getAuthor());

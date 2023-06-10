@@ -18,6 +18,7 @@ import ru.practicum.shareit.item.dto.ItemDtoWithBookings;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.User;
+import ru.practicum.shareit.user.UserRepository;
 import ru.practicum.shareit.user.UserService;
 
 import java.time.LocalDateTime;
@@ -47,6 +48,12 @@ public class ItemServiceTest {
 
     @Mock
     private CommentRepository commentRepository;
+
+    @Mock
+    private CommentMapper commentMapper;
+
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private ItemService itemService;
@@ -353,6 +360,111 @@ public class ItemServiceTest {
         assertEquals(expectedDtoList.get(1).getAvailable(), result.get(1).getAvailable());
     }
 
+    @Test
+    void addComment_EmptyText() {
+        CommentDto commentDto = new CommentDto();
+        commentDto.setText("");
+
+        assertThrows(BadRequestException.class, () -> itemService.addComment(1L, 1L, commentDto));
+    }
+
+    @Test
+    void addComment_BadRequest() {
+        Comment comment = createComment(1);
+        CommentDto commentDto = new CommentDto();
+        commentDto.setId(comment.getId());
+        commentDto.setText(comment.getText());
+        commentDto.setCreated(comment.getCreated());
+        commentDto.setAuthorName(comment.getAuthor().getName());
+
+        Booking booking = createBooking(1);
+        booking.setEnd(LocalDateTime.now().plusDays(1));
+
+        when(bookingRepository.findByBookerIdOrderByStartDesc(comment.getAuthor().getId())).thenReturn(Collections.singletonList(booking));
+
+        assertThrows(BadRequestException.class, () -> itemService.addComment(1L, 1L, commentDto));
+    }
+
+    @Test
+    void addComment_Success() {
+        Booking booking = createBooking(1);
+        booking.setStart(LocalDateTime.now().minusDays(2));
+        booking.setEnd(LocalDateTime.now().minusDays(1));
+        booking.setStatus(BookingStatus.APPROVED);
+        Comment comment = createComment(1);
+        CommentDto expected = new CommentDto();
+        expected.setId(comment.getId());
+        expected.setText(comment.getText());
+        expected.setCreated(comment.getCreated());
+        expected.setAuthorName(comment.getAuthor().getName());
+        Item item = booking.getItem();
+        User booker = booking.getBooker();
+        User owner = item.getOwner();
+        comment.setAuthor(booker);
+
+        when(commentMapper.commentDtoToComment(expected, booker, item)).thenReturn(comment);
+        when(userRepository.findById(booker.getId())).thenReturn(Optional.of(booker));
+        when(itemRepository.findById(item.getId())).thenReturn(Optional.of(item));
+        when(commentRepository.save(comment)).thenReturn(comment);
+        when(commentMapper.commentToCommentDto(comment)).thenReturn(expected);
+        when(bookingRepository.findByBookerIdOrderByStartDesc(booker.getId())).thenReturn(Collections.singletonList(booking));
+
+        CommentDto actual = itemService.addComment(item.getId(), booker.getId(), expected);
+
+        assertEquals(expected.getId(), actual.getId());
+        assertEquals(expected.getText(), actual.getText());
+        assertEquals(expected.getAuthorName(), actual.getAuthorName());
+    }
+
+    @Test
+    void updateItemTest_RequestByNotItemOwner() {
+        Item item = createItem(1);
+
+        when(itemRepository.findById(item.getId())).thenReturn(Optional.of(item));
+
+        assertThrows(NotFoundException.class, () -> itemService.updateItem(1L, new ItemDtoWithBookings(), 1L));
+    }
+
+    @Test
+    void updateItemTest_NullName() {
+        Item item = createItem(1);
+        ItemDtoWithBookings itemDtoWithBookings = new ItemDtoWithBookings();
+        itemDtoWithBookings.setId(1L);
+        itemDtoWithBookings.setName("new item");
+        itemDtoWithBookings.setDescription("new description");
+        itemDtoWithBookings.setAvailable(true);
+        ItemDtoDefault expected = new ItemDtoDefault();
+        expected.setId(item.getId());
+        expected.setAvailable(item.getAvailable());
+        expected.setName(item.getName());
+        expected.setDescription(item.getDescription());
+        expected.setOwner(item.getOwner());
+
+        when(itemRepository.findById(item.getId())).thenReturn(Optional.of(item));
+        when(itemRepository.save(item)).thenReturn(item);
+        when(itemMapper.itemToItemDtoDefault(item)).thenReturn(expected);
+
+        ItemDtoDefault result = itemService.updateItem(item.getId(), itemDtoWithBookings, item.getOwner().getId());
+
+        assertEquals(expected.getId(), result.getId());
+        assertEquals(expected.getName(), result.getName());
+        assertEquals(expected.getDescription(), result.getDescription());
+    }
+
+    @Test
+    void deleteTest() {
+        itemService.deleteItem(1L);
+
+        verify(itemRepository, times(1)).deleteById(1L);
+    }
+
+    @Test
+    void updateItemTest_ItemNotFound() {
+        when(itemRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> itemService.updateItem(1L, new ItemDtoWithBookings(), 1L));
+    }
+
     private Booking createBooking(int number) {
         Booking booking = new Booking();
         booking.setId((long) number);
@@ -392,10 +504,11 @@ public class ItemServiceTest {
     }
 
     public ItemDtoWithBookings itemToItemDtoWithBookings(Item item, BookingIdAndBookerId last, BookingIdAndBookerId next, List<Comment> comment) {
+        CommentMapper commentMapper1 = new CommentMapper();
         if (item == null) {
             return null;
         }
-        List<CommentDto> comments = comment.stream().map(CommentMapper::commentToCommentDto).collect(Collectors.toList());
+        List<CommentDto> comments = comment.stream().map(commentMapper1::commentToCommentDto).collect(Collectors.toList());
         ItemDtoWithBookings itemDtoWithBookings = ItemDtoWithBookings.builder()
                 .id(item.getId())
                 .name(item.getName())

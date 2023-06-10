@@ -11,6 +11,7 @@ import ru.practicum.shareit.booking.dto.BookingDtoInput;
 import ru.practicum.shareit.booking.dto.BookingDtoOutput;
 import ru.practicum.shareit.exaption.BadRequestException;
 import ru.practicum.shareit.exaption.NotFoundException;
+import ru.practicum.shareit.exaption.UnsupportedStatusException;
 import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.User;
@@ -647,6 +648,57 @@ public class BookingServiceTest {
         assertEquals(bookings.get(0).getBooker(), result.get(0).getBooker());
         assertEquals(BookingStatus.WAITING, result.get(0).getStatus());
     }
+
+    @Test
+    void getBookingTest_RequestButNotOwner() {
+        Booking booking = createBooking(1);
+
+        when(userRepository.findById(10L)).thenReturn(Optional.of(new User()));
+        when(bookingRepository.findById(booking.getId())).thenReturn(Optional.of(booking));
+
+        assertThrows(NotFoundException.class, () -> bookingService.getBooking(booking.getId(), 10L));
+    }
+
+    @Test
+    void getBookingsByUserIdTest_FromAndSizeZero() {
+        assertThrows(BadRequestException.class, () -> bookingService.getBookingsByUserId("some", 1L, 0, 0));
+    }
+
+    @Test
+    void getBookingsByUserIdTest_UserNotFound() {
+        when(userRepository.existsById(1L)).thenReturn(false);
+
+        assertThrows(NotFoundException.class, () -> bookingService.getBookingsByUserId("some", 1L, 1, 10));
+    }
+
+    @Test
+    void getBookingsByUserId_UnsupportedStatusException() {
+
+        when(userRepository.existsById(1L)).thenReturn(true);
+
+        assertThrows(UnsupportedStatusException.class, () -> bookingService.getBookingsByUserId("some", 1L, 1, 10));
+    }
+
+    @Test
+    void getBookingsByOwnerId_FromAndSizeZero() {
+        assertThrows(BadRequestException.class, () -> bookingService.getBookingsByOwnerId("some", 1L, 0, 0));
+    }
+
+    @Test
+    void getBookingsByOwnerId_UserNotFound() {
+        when(userRepository.existsById(1L)).thenReturn(false);
+
+        assertThrows(NotFoundException.class, () -> bookingService.getBookingsByOwnerId("some", 1L, 1, 10));
+    }
+
+    @Test
+    void getBookingsByOwnerId_UnsupportedStatusException() {
+
+        when(userRepository.existsById(1L)).thenReturn(true);
+
+        assertThrows(UnsupportedStatusException.class, () -> bookingService.getBookingsByOwnerId("some", 1L, 1, 10));
+    }
+
 
     private Booking createBooking(int number) {
         Booking booking = new Booking();
