@@ -9,4 +9,5 @@ public class ItemDtoDefault {
     private String description;
     private Boolean available;
     private User owner;
+    private Long requestId;
 }

@@ -48,10 +48,10 @@ public class ItemService {
         if (bookingRepository.findByBookerIdOrderByStartDesc(userId).stream().filter(o -> o.getItem().getId().equals(itemId)).filter(o -> o.getStatus().equals(BookingStatus.APPROVED)).filter(o -> o.getEnd().isBefore(LocalDateTime.now())).count() == 0) {
             throw new BadRequestException("You cant add this comment");
         }
-        Comment comment = commentRepository.save(commentMapper.commentDtoToComment(commentDto, userId, itemId,
+        Comment comment = commentRepository.save(commentMapper.commentDtoToComment(commentDto,
                 userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User not found.")),
                 itemRepository.findById(itemId).orElseThrow(() -> new NotFoundException("Item not found."))));
-        return CommentMapper.commentToCommentDto(comment);
+        return commentMapper.commentToCommentDto(comment);
     }
 
     public ItemDtoWithBookings getItemById(Long id, Long userId) {
@@ -72,7 +72,6 @@ public class ItemService {
         if (user == null) {
             throw new NotFoundException("User not found.");
         }
-
         List<Item> items = itemRepository.findByOwnerIdOrderById(userId);
         List<ItemDtoWithBookings> itemsWithDates = new ArrayList<>();
         for (Item item : items) {

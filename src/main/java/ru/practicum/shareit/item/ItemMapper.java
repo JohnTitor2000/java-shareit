@@ -15,10 +15,11 @@ import java.util.stream.Collectors;
 public class ItemMapper {
 
     public ItemDtoWithBookings itemToItemDtoWithBookings(Item item, BookingIdAndBookerId last, BookingIdAndBookerId next, List<Comment> comment) {
+        CommentMapper commentMapper = new CommentMapper();
         if (item == null) {
             return null;
         }
-        List<CommentDto> comments = comment.stream().map(CommentMapper::commentToCommentDto).collect(Collectors.toList());
+        List<CommentDto> comments = comment.stream().map(commentMapper::commentToCommentDto).collect(Collectors.toList());
         ItemDtoWithBookings itemDtoWithBookings = ItemDtoWithBookings.builder()
                 .id(item.getId())
                 .name(item.getName())
@@ -52,6 +53,7 @@ public class ItemMapper {
         itemDtoDefault.setDescription(item.getDescription());
         itemDtoDefault.setOwner(item.getOwner());
         itemDtoDefault.setAvailable(item.getAvailable());
+        itemDtoDefault.setRequestId(item.getRequestId());
         return itemDtoDefault;
     }
 }
