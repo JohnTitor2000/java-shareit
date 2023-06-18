@@ -30,12 +30,12 @@ public class UserController {
     }
 
     @PostMapping
-    public User createUser( @RequestBody User user) {
+    public User createUser(@RequestBody User user) {
         return userService.createUser(user);
     }
 
     @PatchMapping("/{id}")
-    public User updateUser(@PathVariable("id") Long id,  @RequestBody User user) {
+    public User updateUser(@PathVariable("id") Long id, @RequestBody User user) {
         return userService.updateUser(user, id);
     }
 
