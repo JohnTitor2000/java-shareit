@@ -25,6 +25,7 @@ services:
       - db
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/shareit
+      - TZ=Europe/Moscow
 
   db:
     image: postgres:13.7-alpine
@@ -32,6 +33,6 @@ services:
     ports:
       - "6541:5432"
     environment:
-      POSTGRES_USER: root
+      POSTGRES_USER: shareit_admin
       POSTGRES_PASSWORD: root
       POSTGRES_DB: shareit
