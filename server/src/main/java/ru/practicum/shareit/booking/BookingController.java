@@ -11,7 +11,7 @@ import java.util.List;
 @RequestMapping(path = "/bookings")
 public class BookingController {
 
-    private BookingService bookingService;
+    private final BookingService bookingService;
 
     @Autowired
     public BookingController(BookingService bookingService) {

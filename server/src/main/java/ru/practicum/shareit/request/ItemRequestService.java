@@ -20,10 +20,10 @@ import java.util.stream.Collectors;
 @AllArgsConstructor(onConstructor = @__(@Autowired))
 public class ItemRequestService {
 
-    UserRepository userRepository;
-    ItemRequestMapper itemRequestMapper;
-    ItemRequestRepository itemRequestRepository;
-    ItemRepository itemRepository;
+    private final UserRepository userRepository;
+    private final ItemRequestMapper itemRequestMapper;
+    private final ItemRequestRepository itemRequestRepository;
+    private final ItemRepository itemRepository;
 
     public ItemRequest saveRequest(ItemRequestDtoInput itemRequestDtoInput, Long userId) {
         return itemRequestRepository.save(itemRequestMapper.itemRequestDtoInputToItemRequest(itemRequestDtoInput,

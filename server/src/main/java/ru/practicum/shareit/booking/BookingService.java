@@ -20,10 +20,10 @@ import java.util.stream.Collectors;
 @AllArgsConstructor(onConstructor = @__(@Autowired))
 public class BookingService {
 
-    private BookingRepository bookingRepository;
-    private UserRepository userRepository;
-    private BookingMapper bookingMapper;
-    private ItemRepository itemRepository;
+    private final BookingRepository bookingRepository;
+    private final UserRepository userRepository;
+    private final BookingMapper bookingMapper;
+    private final ItemRepository itemRepository;
 
     public BookingDtoOutput createBooking(BookingDtoInput bookingDtoInput, Long sharerId) {
         if (bookingDtoInput.getStart() == null) {

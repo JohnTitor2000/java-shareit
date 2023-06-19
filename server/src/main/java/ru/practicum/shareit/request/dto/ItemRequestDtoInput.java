@@ -4,5 +4,5 @@ import lombok.Data;
 
 @Data
 public class ItemRequestDtoInput {
-    String description;
+    private String description;
 }

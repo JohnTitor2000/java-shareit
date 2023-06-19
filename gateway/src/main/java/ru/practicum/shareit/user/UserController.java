@@ -26,26 +26,31 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<Object> createUser(@RequestBody @Valid UserGateWay userGateWay) {
+        log.info("Create user with name={}, email={}", userGateWay.getName(), userGateWay.getEmail());
         return userClient.createUser(userGateWay);
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<Object> updateUser(@PathVariable("id") @Positive Long id, @RequestBody UserGateWay userGateWay) {
+        log.info("Update user with userId={}, name={}, email={}", id, userGateWay.getName(), userGateWay.getEmail());
         return userClient.updateUser(id, userGateWay);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Object> getUser(@PathVariable("id") @Positive Long id) {
+        log.info("Get user with userId={}", id);
         return userClient.getUser(id);
     }
 
     @GetMapping
     public ResponseEntity<Object> getAllUsers() {
+        log.info("Get all users");
         return userClient.getAllUsers();
     }
 
     @DeleteMapping("/{id}")
     public  ResponseEntity<Object> deleteUser(@PathVariable("id") @Positive Long userId) {
+        log.info("Delete user with userId={}", userId);
         return  userClient.deleteUser(userId);
     }
 }

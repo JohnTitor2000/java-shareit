@@ -29,13 +29,13 @@ import java.util.stream.Collectors;
 @AllArgsConstructor(onConstructor = @__(@Autowired))
 public class ItemService {
 
-    private BookingRepository bookingRepository;
-    private ItemRepository itemRepository;
-    private UserService userService;
-    private ItemMapper itemMapper;
-    private CommentRepository commentRepository;
-    private CommentMapper commentMapper;
-    private UserRepository userRepository;
+    private final BookingRepository bookingRepository;
+    private final ItemRepository itemRepository;
+    private final UserService userService;
+    private final ItemMapper itemMapper;
+    private final CommentRepository commentRepository;
+    private final CommentMapper commentMapper;
+    private final UserRepository userRepository;
 
     public List<ItemDtoDefault> getAllItems() {
         return itemRepository.findAll().stream().map(itemMapper::itemToItemDtoDefault).collect(Collectors.toList());
