@@ -11,7 +11,6 @@ import ru.practicum.shareit.item.dto.ItemDtoGateway;
 import ru.practicum.shareit.item.dto.ItemDtoWithBookingsGateWay;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 
 @Slf4j
