@@ -52,7 +52,7 @@ public class ItemController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Object> search(@RequestParam(value = "text", defaultValue = "") @NotBlank String text, @RequestHeader(name = "X-Sharer-User-Id", required = true) @Positive Long userId) {
+    public ResponseEntity<Object> search(@RequestParam(value = "text", defaultValue = "") String text, @RequestHeader(name = "X-Sharer-User-Id", required = true) @Positive Long userId) {
         log.info("Search item with text={}, userId={}", text, userId);
         return itemClient.search(text, userId);
     }
