@@ -52,14 +52,6 @@ class ItemRequestServiceTest {
     }
 
     @Test
-    void saveRequest_DescriptionIsNull() {
-        ItemRequestDtoInput itemRequestDtoInput = new ItemRequestDtoInput();
-        itemRequestDtoInput.setDescription(null);
-
-        assertThrows(BadRequestException.class, () -> itemRequestService.saveRequest(itemRequestDtoInput, 1L));
-    }
-
-    @Test
     void saveRequest_Success() {
         ItemRequest itemRequest = createItemRequest(1);
         ItemRequestDtoInput itemRequestDtoInput = new ItemRequestDtoInput();

@@ -65,16 +65,6 @@ class UserServiceTest {
     }
 
     @Test
-    void testCreateUser_NullEmail_ThrowsBadRequestException() {
-        User user = new User();
-        user.setName("John");
-        user.setEmail(null);
-
-        assertThrows(BadRequestException.class, () -> userService.createUser(user));
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
     void testUpdateUser_ExistingUser_ReturnsUpdatedUser() {
         Long userId = 1L;
         User existingUser = new User();

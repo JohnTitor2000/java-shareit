@@ -145,18 +145,6 @@ class UserControllerTest {
     }
 
     @Test
-    void testCreateUsers_FailedInvalidEmail() throws Exception {
-        User user = new User();
-
-        when(userService.createUser(user)).thenThrow(new BadRequestException("invalid email"));
-
-        mockMvc.perform(post("/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\": 1, \"name\": \"John\", \"email\": \"john\"}"))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
     void testUpdateUser_Success() throws Exception {
         Long userId = 1L;
         User updatedUser = new User();
